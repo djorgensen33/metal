@@ -118,6 +118,23 @@
     }
     .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 
+    .admin-auth-btn {
+      background: #181820;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.6rem 1rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: all 0.2s;
+    }
+    .admin-auth-btn.logged-in {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34d399;
+    }
+
     main { max-width: 1400px; margin: 2rem auto; padding: 0 1.5rem; }
 
     .modal-overlay {
@@ -252,61 +269,17 @@
       background-color: rgba(229, 9, 20, 0.2) !important;
     }
 
-    .upcoming-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 1.5rem;
-    }
-    .upcoming-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      transition: transform 0.2s, border-color 0.2s;
-      cursor: pointer;
-    }
-    .upcoming-card:hover {
-      transform: translateY(-4px);
-      border-color: var(--accent);
-    }
-    .upcoming-card-header {
-      display: flex;
-      gap: 1rem;
-      padding: 1.2rem;
-      background: #121216;
-      border-bottom: 1px solid var(--border);
-      align-items: center;
-    }
-    .upcoming-cover {
-      width: 70px;
-      height: 70px;
-      border-radius: 6px;
-      object-fit: cover;
-      background: #000;
-      border: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .upcoming-meta h3 {
-      font-size: 1rem;
-      font-weight: 700;
+    .inline-edit-input {
+      width: 100%;
+      background: #09090b;
+      border: 1px solid var(--accent);
       color: var(--text-main);
-      margin-bottom: 0.2rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.95rem;
     }
-    .upcoming-meta .band-name {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-    .upcoming-card-body {
-      padding: 1.2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.8rem;
-      flex-grow: 1;
-      justify-content: space-between;
-    }
+
     .countdown-badge {
       display: inline-flex;
       align-items: center;
@@ -314,24 +287,15 @@
       background: rgba(229, 9, 20, 0.15);
       border: 1px solid rgba(229, 9, 20, 0.4);
       color: #ff6b72;
-      padding: 0.4rem 0.8rem;
+      padding: 0.3rem 0.7rem;
       border-radius: 20px;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 700;
-      width: fit-content;
     }
     .countdown-badge.today {
       background: rgba(16, 185, 129, 0.15);
       border-color: rgba(16, 185, 129, 0.4);
       color: #34d399;
-    }
-    .upcoming-details {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      display: flex;
-      justify-content: space-between;
-      border-top: 1px solid var(--border);
-      padding-top: 0.8rem;
     }
 
     .metal-rating-container {
@@ -419,8 +383,9 @@
 
       <div class="nav-actions">
         <button class="btn-action btn-danger" id="delete-selected-btn" style="display:none;" onclick="deleteSelectedAlbums()">🗑 Slet valgte (<span id="selected-count">0</span>)</button>
-        <button class="btn-action btn-primary" onclick="openAddModal()">➕ Tilføj Album</button>
-        <button class="btn-action" onclick="fetchDataFromSheet(true)">🔄 Synkroniser</button>
+        <button class="btn-action btn-primary" id="add-album-btn" style="display:none;" onclick="openAddModal()">➕ Tilføj Album</button>
+        <button class="btn-action" id="sync-btn" style="display:none;" onclick="fetchDataFromSheet(true)">🔄 Synkroniser</button>
+        <button class="admin-auth-btn" id="admin-auth-toggle" onclick="toggleAdminAuth()">🔐 Admin Login</button>
       </div>
     </div>
   </header>
@@ -433,6 +398,10 @@
       </select>
       <select id="year-filter" class="filter-select" onchange="renderApp()">
         <option value="">Alle årstal</option>
+      </select>
+      <select id="rating-filter" class="filter-select" onchange="renderApp()">
+        <option value="">Alle karakterer</option>
+        <option value="missing">Mangler karakter (0)</option>
       </select>
       <button class="reset-btn" onclick="resetFilters()">↺ Nulstil</button>
     </div>
@@ -497,8 +466,10 @@
     let library = [];
     let currentSort = { column: 'artist', asc: true };
     let currentView = 'vault';
+    let isAdmin = localStorage.getItem('metal_vault_admin') === 'true';
 
     window.addEventListener('DOMContentLoaded', () => {
+      updateAdminUI();
       const cached = localStorage.getItem('metal_vault_cache');
       if (cached) {
         try {
@@ -510,6 +481,46 @@
       fetchDataFromSheet(library.length === 0);
     });
 
+    function toggleAdminAuth() {
+      if (isAdmin) {
+        if (confirm('Vil du logge ud af admin-tilstand?')) {
+          isAdmin = false;
+          localStorage.setItem('metal_vault_admin', 'false');
+          updateAdminUI();
+          renderApp();
+        }
+      } else {
+        const pass = prompt('Indtast adgangskode for at redigere:');
+        if (pass === 'metal123') {
+          isAdmin = true;
+          localStorage.setItem('metal_vault_admin', 'true');
+          alert('Du er nu logget ind som Admin!');
+          updateAdminUI();
+          renderApp();
+        } else if (pass !== null) {
+          alert('Forkert adgangskode!');
+        }
+      }
+    }
+
+    function updateAdminUI() {
+      const btn = document.getElementById('admin-auth-toggle');
+      const addBtn = document.getElementById('add-album-btn');
+      const syncBtn = document.getElementById('sync-btn');
+      
+      if (isAdmin) {
+        btn.innerText = '🔓 Log ud (Admin)';
+        btn.classList.add('logged-in');
+        if (addBtn) addBtn.style.display = 'inline-flex';
+        if (syncBtn) syncBtn.style.display = 'inline-flex';
+      } else {
+        btn.innerText = '🔐 Admin Login';
+        btn.classList.remove('logged-in');
+        if (addBtn) addBtn.style.display = 'none';
+        if (syncBtn) syncBtn.style.display = 'none';
+      }
+    }
+
     function switchView(view) {
       currentView = view;
       document.getElementById('tab-vault').classList.toggle('active', view === 'vault');
@@ -518,11 +529,6 @@
       const filterPanel = document.getElementById('filter-panel-container');
       if (filterPanel) filterPanel.style.display = (view === 'vault') ? 'flex' : 'none';
       
-      if (view === 'upcoming') {
-        const deleteBtn = document.getElementById('delete-selected-btn');
-        if (deleteBtn) deleteBtn.style.display = 'none';
-      }
-
       renderApp();
     }
 
@@ -580,9 +586,8 @@
       const genres = [...new Set(library.map(i => String(i.genre || '').trim()).filter(Boolean))].sort();
       const years = [...new Set(library.map(i => {
         if (!i.date) return '';
-        const clean = String(i.date).split('T')[0];
-        const parts = clean.split('-');
-        return parts.length === 3 ? parts[0] : '';
+        const d = addOneDay(i.date);
+        return d && !isNaN(d) ? d.getFullYear() : '';
       }).filter(Boolean))].sort((a, b) => b - a);
 
       genreSelect.innerHTML = '<option value="">Alle genrer</option>' + genres.map(g => '<option value="' + g + '">' + g + '</option>').join('');
@@ -604,6 +609,7 @@
     }
 
     function openAddModal() {
+      if (!isAdmin) return;
       document.getElementById('album-modal').classList.add('active');
       document.getElementById('album-modal-title').innerText = 'Tilføj Nyt Album';
       document.getElementById('album-edit-id').value = '';
@@ -619,6 +625,7 @@
     }
 
     function openEditModal(id) {
+      if (!isAdmin) return;
       const item = library.find(i => String(i.id) === String(id));
       if (!item) return;
 
@@ -669,6 +676,7 @@
 
     function updateRatingDirect(id, newRating, event) {
       if (event) event.stopPropagation();
+      if (!isAdmin) return;
       const item = library.find(i => String(i.id) === String(id));
       if (!item) return;
       
@@ -684,13 +692,63 @@
       });
     }
 
+    function makeEditable(cellElement, id, field) {
+      if (!isAdmin) return;
+      if (cellElement.querySelector('input')) return;
+
+      const item = library.find(i => String(i.id) === String(id));
+      if (!item) return;
+
+      const currentValue = field === 'date' ? (item[field] ? String(item[field]).split('T')[0] : '') : (item[field] || '');
+      const inputType = field === 'date' ? 'date' : 'text';
+
+      cellElement.innerHTML = '<input type="' + inputType + '" class="inline-edit-input" value="' + currentValue.replace(/"/g, '&quot;') + '" onclick="event.stopPropagation()">';
+      const input = cellElement.querySelector('input');
+      input.focus();
+
+      const saveChanges = () => {
+        const newVal = input.value;
+        if (newVal !== currentValue) {
+          item[field] = newVal;
+          localStorage.setItem('metal_vault_cache', JSON.stringify(library));
+          populateFilterDropdowns();
+          renderApp();
+
+          sendToSheet({
+            action: 'save',
+            artist: item.artist || '',
+            title: item.title || '',
+            date: item.date || '',
+            genre: item.genre || '',
+            rating: item.rating || 0,
+            cover: item.cover || '',
+            spotify: item.spotify || '',
+            review: item.review || ''
+          });
+        } else {
+          renderApp();
+        }
+      };
+
+      input.addEventListener('blur', saveChanges);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          saveChanges();
+        } else if (e.key === 'Escape') {
+          renderApp();
+        }
+      });
+    }
+
     function resetFilters() {
       const searchBar = document.getElementById('search-bar');
       const genreFilter = document.getElementById('genre-filter');
       const yearFilter = document.getElementById('year-filter');
+      const ratingFilter = document.getElementById('rating-filter');
       if (searchBar) searchBar.value = '';
       if (genreFilter) genreFilter.value = '';
       if (yearFilter) yearFilter.value = '';
+      if (ratingFilter) ratingFilter.value = '';
       renderApp();
     }
 
@@ -711,17 +769,17 @@
     }
 
     function updateSelectedCount() {
-      if (currentView !== 'vault') return;
       const checked = document.querySelectorAll('.row-checkbox:checked');
       const countSpan = document.getElementById('selected-count');
       const deleteBtn = document.getElementById('delete-selected-btn');
       if (countSpan && deleteBtn) {
         countSpan.innerText = checked.length;
-        deleteBtn.style.display = checked.length > 0 ? 'inline-flex' : 'none';
+        deleteBtn.style.display = (isAdmin && checked.length > 0) ? 'inline-flex' : 'none';
       }
     }
 
     function deleteSelectedAlbums() {
+      if (!isAdmin) return;
       const checked = document.querySelectorAll('.row-checkbox:checked');
       if (checked.length === 0) return;
 
@@ -749,19 +807,38 @@
       });
     }
 
-    function formatDateDK(dateString) {
-      if (!dateString) return '';
+    function addOneDay(dateString) {
+      if (!dateString) return null;
       const clean = String(dateString).split('T')[0];
       const parts = clean.split('-');
-      if (parts.length !== 3) return dateString;
-      return parts[2] + '-' + parts[1] + '-' + parts[0];
+      if (parts.length !== 3) return new Date(dateString);
+      
+      const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      d.setDate(d.getDate() + 1);
+      return d;
+    }
+
+    function formatDateDK(dateString) {
+      if (!dateString) return '';
+      const d = addOneDay(dateString);
+      if (!d || isNaN(d)) return dateString;
+      
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return day + '-' + month + '-' + year;
+    }
+
+    function parseLocalDate(dateString) {
+      return addOneDay(dateString);
     }
 
     function getDaysUntil(dateString) {
       if (!dateString) return null;
       const today = new Date();
       today.setHours(0,0,0,0);
-      const target = new Date(String(dateString).split('T')[0]);
+      const target = parseLocalDate(dateString);
+      if (!target) return null;
       target.setHours(0,0,0,0);
       const diffTime = target - today;
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -788,12 +865,15 @@
         html += '<span class="rating-text-label" style="opacity:0.4;">-</span>';
       }
 
-      html += '<div class="rating-popup" onclick="event.stopPropagation()">';
-      for (let score = 1; score <= 10; score++) {
-        html += '<button class="popup-skull-btn" onclick="updateRatingDirect(\'' + rowId + '\', ' + score + ', event)" title="' + score + '/10">💀</button>';
+      if (isAdmin) {
+        html += '<div class="rating-popup" onclick="event.stopPropagation()">';
+        for (let score = 1; score <= 10; score++) {
+          html += '<button class="popup-skull-btn" onclick="updateRatingDirect(\'' + rowId + '\', ' + score + ', event)" title="' + score + '/10">💀</button>';
+        }
+        html += '</div>';
       }
-      html += '</div></div>';
 
+      html += '</div>';
       return html;
     }
 
@@ -801,49 +881,78 @@
       const today = new Date();
       today.setHours(0,0,0,0);
 
+      const searchTerm = document.getElementById('upcoming-search-bar')?.value.toLowerCase() || '';
+
       const upcoming = library.filter(item => {
         if (!item.date) return false;
-        const target = new Date(String(item.date).split('T')[0]);
+        const target = parseLocalDate(item.date);
+        if (!target) return false;
         target.setHours(0,0,0,0);
-        return target >= today;
-      }).sort((a, b) => new Date(a.date) - new Date(b.date));
+        if (target < today) return false;
+
+        return Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm));
+      }).sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date));
+
+      const getArrow = (col) => currentSort.column === col ? (currentSort.asc ? '▲' : '▼') : '';
+
+      container.innerHTML = '<div class="filter-panel">' +
+        '<input type="text" id="upcoming-search-bar" class="search-input" placeholder="🔍 Søg i upcoming..." value="' + searchTerm + '" oninput="renderUpcomingView(document.getElementById(\'content-container\'))">' +
+      '</div>';
 
       if (upcoming.length === 0) {
-        container.innerHTML = '<div class="loading-msg">Ingen upcoming releases fundet i databasen.</div>';
+        container.innerHTML += '<div class="loading-msg">Ingen upcoming releases fundet, der matcher dine filtre.</div>';
+        updateSelectedCount();
         return;
       }
 
-      container.innerHTML = '<div class="upcoming-grid">' + upcoming.map((item, idx) => {
-        const days = getDaysUntil(item.date);
-        const formattedDate = formatDateDK(item.date);
-        const rowId = item.id || ("row_" + (idx+1));
-        
-        let badgeHtml = '';
-        if (days === 0) {
-          badgeHtml = '<div class="countdown-badge today">🔥 Udkommer I DAG!</div>';
-        } else if (days === 1) {
-          badgeHtml = '<div class="countdown-badge">⏳ Udkommer i morgen</div>';
-        } else if (days > 1) {
-          badgeHtml = '<div class="countdown-badge">⏳ Om ' + days + ' dage</div>';
-        }
+      container.innerHTML += '<div class="table-container">' +
+        '<table class="vault-table">' +
+          '<thead>' +
+            '<tr>' +
+              '<th style="width: 45px;"><input type="checkbox" onclick="toggleSelectAll(this)"></th>' +
+              '<th><div class="th-content" onclick="sortTable(\'artist\')">Band <span>' + getArrow('artist') + '</span></div></th>' +
+              '<th><div class="th-content" onclick="sortTable(\'title\')">Albumtitel <span>' + getArrow('title') + '</span></div></th>' +
+              '<th style="width: 150px;"><div class="th-content" onclick="sortTable(\'date\')">Udgivelsesdato <span>' + getArrow('date') + '</span></div></th>' +
+              '<th style="width: 170px;"><div class="th-content" onclick="sortTable(\'genre\')">Genre <span>' + getArrow('genre') + '</span></div></th>' +
+              '<th style="width: 180px;">Status</th>' +
+            '</tr>' +
+          '</thead>' +
+          '<tbody>' +
+            upcoming.map((item, idx) => {
+              const days = getDaysUntil(item.date);
+              const formattedDate = formatDateDK(item.date);
+              const rowId = item.id || ("row_" + (idx+1));
+              const rowClass = isAdmin ? 'clickable-row' : '';
+              
+              let badgeHtml = '';
+              if (days === 0) {
+                badgeHtml = '<div class="countdown-badge today">🔥 I DAG!</div>';
+              } else if (days === 1) {
+                badgeHtml = '<div class="countdown-badge">⏳ I morgen</div>';
+              } else if (days > 1) {
+                badgeHtml = '<div class="countdown-badge">⏳ Om ' + days + ' dage</div>';
+              }
 
-        return '<div class="upcoming-card" onclick="openEditModal(\'' + rowId + '\')">' +
-          '<div class="upcoming-card-header">' +
-            (item.cover ? '<img src="' + item.cover + '" class="upcoming-cover" onerror="this.style.display=\'none\'">' : '<div class="upcoming-cover" style="display:flex;align-items:center;justify-content:center;">🎸</div>') +
-            '<div class="upcoming-meta">' +
-              '<div class="band-name">' + (item.artist || 'Ukendt Band') + '</div>' +
-              '<h3>' + (item.title || 'Udgivelse') + '</h3>' +
-            '</div>' +
-          '</div>' +
-          '<div class="upcoming-card-body">' +
-            '<div>' + badgeHtml + '</div>' +
-            '<div class="upcoming-details">' +
-              '<span>📅 ' + formattedDate + '</span>' +
-              '<span>' + (item.genre || 'Metal') + '</span>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      }).join('') + '</div>';
+              return '<tr class="' + rowClass + '" ' + (isAdmin ? 'onclick="openEditModal(\'' + rowId + '\')"' : '') + '>' +
+                '<td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" value="' + rowId + '" onchange="updateSelectedCount()"></td>' +
+                '<td ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'artist\'); event.stopPropagation();"' : '') + '>' + (item.artist || '') + '</td>' +
+                '<td style="font-weight:600;" ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'title\'); event.stopPropagation();"' : '') + '>' +
+                  '<div style="display: flex; align-items: center; gap: 10px;">' +
+                    (item.cover ? '<img src="' + item.cover + '" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0;" onerror="this.style.display=\'none\'">' : '') +
+                    '<span>' + (item.title || '') + '</span>' +
+                    (item.spotify ? '<a href="' + item.spotify + '" target="_blank" onclick="event.stopPropagation()" title="Åbn i Spotify" style="color: #1DB954; font-size: 1.2rem; text-decoration: none; margin-left: auto; flex-shrink: 0;">🟢</a>' : '') +
+                  '</div>' +
+                '</td>' +
+                '<td ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'date\'); event.stopPropagation();"' : '') + '>' + formattedDate + '</td>' +
+                '<td ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'genre\'); event.stopPropagation();"' : '') + '>' + (item.genre || '') + '</td>' +
+                '<td>' + badgeHtml + '</td>' +
+              '</tr>';
+            }).join('') +
+          '</tbody>' +
+        '</table>' +
+      '</div>';
+      
+      updateSelectedCount();
     }
 
     function renderApp() {
@@ -861,13 +970,15 @@
       const searchTerm = document.getElementById('search-bar')?.value.toLowerCase() || '';
       const selectedGenre = document.getElementById('genre-filter')?.value || '';
       const selectedYear = document.getElementById('year-filter')?.value || '';
+      const selectedRatingFilter = document.getElementById('rating-filter')?.value || '';
 
-      // Filtrer så kun udgivelser der IKKE er i fremtiden (eller ikke har dato) vises i hoveddatabasen
       let filtered = library.filter(item => {
         if (item.date) {
-          const target = new Date(String(item.date).split('T')[0]);
-          target.setHours(0,0,0,0);
-          if (target > today) return false; // Skjuler fremtidige udgivelser her
+          const target = parseLocalDate(item.date);
+          if (target) {
+            target.setHours(0,0,0,0);
+            if (target > today) return false;
+          }
         }
 
         const matchesSearch = Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm));
@@ -875,18 +986,30 @@
         
         let matchesYear = true;
         if (selectedYear) {
-          const itemYear = item.date ? String(item.date).split('T')[0].split('-')[0] : '';
+          const d = addOneDay(item.date);
+          const itemYear = d && !isNaN(d) ? String(d.getFullYear()) : '';
           matchesYear = itemYear === selectedYear;
         }
 
-        return matchesSearch && matchesGenre && matchesYear;
+        let matchesRating = true;
+        if (selectedRatingFilter === 'missing') {
+          const r = String(item.rating || '').trim();
+          matchesRating = (r === '' || r === '0' || isNaN(Number(r)) || Number(r) === 0);
+        }
+
+        return matchesSearch && matchesGenre && matchesYear && matchesRating;
       });
 
       filtered.sort((a, b) => {
         let valA = a[currentSort.column] || '';
         let valB = b[currentSort.column] || '';
-        if (typeof valA === 'string') valA = valA.toLowerCase();
-        if (typeof valB === 'string') valB = valB.toLowerCase();
+        if (currentSort.column === 'date') {
+          valA = addOneDay(a.date) || new Date(0);
+          valB = addOneDay(b.date) || new Date(0);
+        } else {
+          if (typeof valA === 'string') valA = valA.toLowerCase();
+          if (typeof valB === 'string') valB = valB.toLowerCase();
+        }
 
         if (valA < valB) return currentSort.asc ? -1 : 1;
         if (valA > valB) return currentSort.asc ? 1 : -1;
@@ -894,7 +1017,7 @@
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = '<div class="loading-msg">Ingen albums fundet i databasen.</div>';
+        container.innerHTML = '<div class="loading-msg">Ingen albums fundet, der matcher dine filtre.</div>';
         updateSelectedCount();
         return;
       }
@@ -916,23 +1039,24 @@
           '<tbody>' +
             filtered.map((item, idx) => {
               const formattedDate = formatDateDK(item.date);
-              const missingRating = (!item.rating || item.rating === 0);
-              const rowClass = missingRating ? 'clickable-row row-missing-rating' : 'clickable-row';
+              const rVal = String(item.rating || '').trim();
+              const missingRating = (rVal === '' || rVal === '0' || Number(rVal) === 0 || isNaN(Number(rVal)));
+              const rowClass = (missingRating ? 'row-missing-rating ' : '') + (isAdmin ? 'clickable-row' : '');
               const rowId = item.id || ("row_" + (idx+1));
               const skullRatingHtml = renderSkulls(item.rating || 0, rowId);
 
-              return '<tr class="' + rowClass + '" onclick="openEditModal(\'' + rowId + '\')">' +
+              return '<tr class="' + rowClass + '" ' + (isAdmin ? 'onclick="openEditModal(\'' + rowId + '\')"' : '') + '>' +
                 '<td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" value="' + rowId + '" onchange="updateSelectedCount()"></td>' +
-                '<td>' + (item.artist || '') + '</td>' +
-                '<td style="font-weight:600;">' +
+                '<td ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'artist\'); event.stopPropagation();"' : '') + '>' + (item.artist || '') + '</td>' +
+                '<td style="font-weight:600;" ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'title\'); event.stopPropagation();"' : '') + '>' +
                   '<div style="display: flex; align-items: center; gap: 10px;">' +
                     (item.cover ? '<img src="' + item.cover + '" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0;" onerror="this.style.display=\'none\'">' : '') +
                     '<span>' + (item.title || '') + '</span>' +
                     (item.spotify ? '<a href="' + item.spotify + '" target="_blank" onclick="event.stopPropagation()" title="Åbn i Spotify" style="color: #1DB954; font-size: 1.2rem; text-decoration: none; margin-left: auto; flex-shrink: 0;">🟢</a>' : '') +
                   '</div>' +
                 '</td>' +
-                '<td>' + formattedDate + '</td>' +
-                '<td>' + (item.genre || '') + '</td>' +
+                '<td ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'date\'); event.stopPropagation();"' : '') + '>' + formattedDate + '</td>' +
+                '<td ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'genre\'); event.stopPropagation();"' : '') + '>' + (item.genre || '') + '</td>' +
                 '<td onclick="event.stopPropagation()">' + skullRatingHtml + '</td>' +
               '</tr>';
             }).join('') +

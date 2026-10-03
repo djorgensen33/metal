@@ -1,462 +1,192 @@
 <!DOCTYPE html>
-<html lang="da">
+<html lang="da" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Metal Vault - Album & Band Database</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            metalDark: '#0d0d0d',
+            metalCard: '#141418',
+            metalBorder: '#262630',
+            metalRed: '#dc2626',
+            metalRedDark: '#991b1b',
+          },
+          fontFamily: {
+            cinzel: ['Cinzel', 'serif'],
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    :root {
-      --bg-dark: #0a0a0c;
-      --bg-card: #141418;
-      --bg-hover: #1c1c22;
-      --accent: #e50914;
-      --accent-hover: #ff1e27;
-      --accent-glow: rgba(229, 9, 20, 0.5);
-      --text-main: #f0f0f2;
-      --text-muted: #8a8a9e;
-      --border: #262630;
-      --radius: 8px;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background-color: var(--bg-dark);
-      color: var(--text-main);
+      background-color: #0d0d0d;
+      color: #f0f0f2;
       font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-      padding-bottom: 50px;
     }
-
-    header {
-      background: linear-gradient(180deg, rgba(20,20,24,0.95) 0%, rgba(10,10,12,0.95) 100%);
-      border-bottom: 2px solid var(--accent);
-      position: sticky; top: 0; z-index: 100;
-      backdrop-filter: blur(10px);
+    .glow-red {
+      text-shadow: 0 0 15px rgba(220, 38, 38, 0.6);
     }
-
-    .nav-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 1rem 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
+    .card-hover {
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
-
-    .logo {
-      font-family: 'Cinzel', serif;
-      font-size: 1.8rem;
-      font-weight: 900;
-      color: var(--text-main);
-      letter-spacing: 2px;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      text-transform: uppercase;
+    .card-hover:hover {
+      transform: translateY(-4px);
+      border-color: #dc2626;
+      box-shadow: 0 10px 25px -5px rgba(220, 38, 38, 0.2);
     }
-    .logo span { color: var(--accent); text-shadow: 0 0 10px var(--accent-glow); }
-
-    .view-tabs {
-      display: flex;
-      gap: 0.5rem;
-      background: #09090b;
-      padding: 4px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-    }
-    .tab-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      padding: 0.5rem 1rem;
-      font-weight: 600;
-      font-size: 0.85rem;
-      cursor: pointer;
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-    .tab-btn.active {
-      background: var(--accent);
-      color: #fff;
-    }
-    .tab-btn:hover:not(.active) { color: var(--text-main); background: rgba(255,255,255,0.05); }
-
-    .nav-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
-
-    .btn-action {
-      background: #1e293b;
-      border: 1px solid #334155;
-      color: #38bdf8;
-      padding: 0.6rem 1rem;
-      font-weight: 600;
-      font-size: 0.85rem;
-      cursor: pointer;
-      border-radius: var(--radius);
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-    .btn-action:hover { background: #334155; border-color: #38bdf8; }
-
-    .btn-danger {
-      background: #450a0a;
-      border: 1px solid #7f1d1d;
-      color: #f87171;
-    }
-    .btn-danger:hover { background: #7f1d1d; color: #fff; }
-
-    .btn-primary {
-      background: var(--accent);
-      border: 1px solid var(--accent);
-      color: #fff;
-    }
-    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-
-    .admin-auth-btn {
-      background: #181820;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      padding: 0.6rem 1rem;
-      font-weight: 600;
-      font-size: 0.85rem;
-      cursor: pointer;
-      border-radius: var(--radius);
-      transition: all 0.2s;
-    }
-    .admin-auth-btn.logged-in {
-      background: rgba(16, 185, 129, 0.15);
-      border-color: rgba(16, 185, 129, 0.4);
-      color: #34d399;
-    }
-
-    main { max-width: 1400px; margin: 2rem auto; padding: 0 1.5rem; }
-
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85);
-      display: none; justify-content: center; align-items: center; z-index: 1000;
-      backdrop-filter: blur(5px);
-    }
-    .modal-overlay.active { display: flex; }
-
-    .modal {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      width: 90%; max-width: 550px;
-      padding: 2rem;
-      position: relative;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .modal h2 { font-family: 'Cinzel', serif; margin-bottom: 1rem; color: var(--accent); }
-
-    .form-group { margin-bottom: 1.2rem; }
-    .form-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; }
-    .form-group textarea, .form-group input, .form-group select {
-      width: 100%;
-      padding: 0.75rem;
-      background: #09090b;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text-main);
-      font-family: inherit;
-    }
-    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); }
-
-    .modal-cover-preview {
-      width: 100%;
-      max-height: 320px;
-      border-radius: var(--radius);
-      object-fit: contain;
-      border: 1px solid var(--border);
-      background: #000;
-      margin-top: 0.8rem;
-      display: block;
-    }
-
-    .filter-panel {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.2rem;
-      margin-bottom: 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .search-input {
-      flex: 2;
-      min-width: 220px;
-      padding: 0.65rem 1rem;
-      background: #09090b;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text-main);
-    }
-    .filter-select {
-      flex: 1;
-      min-width: 150px;
-      padding: 0.65rem 1rem;
-      background: #09090b;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text-main);
-      cursor: pointer;
-    }
-    .reset-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      padding: 0.65rem 1rem;
-      font-size: 0.85rem;
-      border-radius: var(--radius);
-      cursor: pointer;
-    }
-    .reset-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
-
-    .table-container {
-      width: 100%;
-      overflow-x: auto;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-    }
-
-    .vault-table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 0.95rem;
-    }
-    .vault-table th, .vault-table td {
-      padding: 1.1rem 1rem;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-    .vault-table th {
-      background: #181820;
-      color: var(--text-muted);
-      font-weight: 600;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      user-select: none;
-    }
-    
-    .th-content {
-      cursor: pointer;
-      display: inline-block;
-    }
-    .th-content:hover { color: var(--text-main); }
-    .vault-table th span { font-size: 0.7rem; margin-left: 4px; color: var(--accent); }
-
-    .clickable-row { transition: background-color 0.2s; cursor: pointer; }
-    .clickable-row:hover { background-color: var(--bg-hover); }
-
-    .row-missing-rating {
-      background-color: rgba(229, 9, 20, 0.12) !important;
-    }
-    .row-missing-rating:hover {
-      background-color: rgba(229, 9, 20, 0.2) !important;
-    }
-
-    .inline-edit-input {
-      width: 100%;
-      background: #09090b;
-      border: 1px solid var(--accent);
-      color: var(--text-main);
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-family: inherit;
-      font-size: 0.95rem;
-    }
-
-    .countdown-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: rgba(229, 9, 20, 0.15);
-      border: 1px solid rgba(229, 9, 20, 0.4);
-      color: #ff6b72;
-      padding: 0.3rem 0.7rem;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 700;
-    }
-    .countdown-badge.today {
-      background: rgba(16, 185, 129, 0.15);
-      border-color: rgba(16, 185, 129, 0.4);
-      color: #34d399;
-    }
-
-    .metal-rating-container {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      cursor: pointer;
-      position: relative;
-    }
-    .metal-skull {
-      font-size: 1.1rem;
-      filter: grayscale(100%) brightness(35%);
-      transition: transform 0.2s ease;
-      display: inline-block;
-    }
-    .metal-skull.active {
-      filter: grayscale(0%) brightness(110%);
-      text-shadow: 0 0 8px var(--accent);
-    }
-    .metal-skull.half {
-      background: linear-gradient(90deg, var(--accent) 50%, #444 50%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 5px var(--accent));
-    }
-    .metal-rating-container:hover .metal-skull { transform: scale(1.15); }
-
-    .rating-text-label {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-left: 8px;
-      font-weight: 600;
-    }
-
-    .rating-popup {
-      display: none;
-      position: absolute;
-      left: 0; bottom: 130%;
-      background: #181820;
-      border: 1px solid var(--accent);
-      border-radius: var(--radius);
-      padding: 6px 10px;
-      z-index: 50;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.8);
-      white-space: nowrap;
-      align-items: center;
-      gap: 5px;
-    }
-    .metal-rating-container:hover .rating-popup,
-    .rating-popup.active { display: flex; }
-
-    .popup-skull-btn {
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      font-size: 1rem;
-      filter: grayscale(100%) brightness(50%);
-      transition: transform 0.1s, filter 0.1s;
-      padding: 2px;
-    }
-    .popup-skull-btn:hover {
-      filter: grayscale(0%) brightness(120%);
-      transform: scale(1.3);
-    }
-
-    .loading-msg, .error-msg {
-      text-align: center;
-      padding: 3rem;
-      color: var(--text-muted);
-      font-size: 1.1rem;
-    }
-    .error-msg { color: #f87171; }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0d0d0d; }
+    ::-webkit-scrollbar-thumb { background: #262630; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #dc2626; }
   </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col selection:bg-red-600 selection:text-white pb-20">
 
-  <header>
-    <div class="nav-container">
-      <div class="logo">🤘 Metal <span>Vault</span></div>
-      
-      <div class="view-tabs">
-        <button class="tab-btn active" id="tab-vault" onclick="switchView('vault')">🗄️ Hoveddatabase</button>
-        <button class="tab-btn" id="tab-upcoming" onclick="switchView('upcoming')">🚀 Upcoming Releases</button>
+  <header class="sticky top-0 z-50 bg-[#0d0d0d]/95 backdrop-blur-md border-b border-metalBorder">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="text-3xl">🤘</div>
+        <div>
+          <h1 class="font-cinzel text-2xl md:text-3xl font-900 tracking-wider text-white uppercase">
+            Metal <span class="text-metalRed glow-red">Vault</span>
+          </h1>
+          <p class="text-xs text-neutral-400 font-sans tracking-wide">Album Database & Metal Nyheder</p>
+        </div>
       </div>
 
-      <div class="nav-actions">
-        <button class="btn-action btn-danger" id="delete-selected-btn" style="display:none;" onclick="deleteSelectedAlbums()">🗑 Slet valgte (<span id="selected-count">0</span>)</button>
-        <button class="btn-action btn-primary" id="add-album-btn" style="display:none;" onclick="openAddModal()">➕ Tilføj Album</button>
-        <button class="btn-action" id="sync-btn" style="display:none;" onclick="fetchDataFromSheet(true)">🔄 Synkroniser</button>
-        <button class="admin-auth-btn" id="admin-auth-toggle" onclick="toggleAdminAuth()">🔐 Admin Login</button>
+      <!-- Nav Tabs -->
+      <div class="flex items-center gap-1 bg-neutral-950 p-1 rounded-xl border border-metalBorder">
+        <button id="tab-vault" onclick="switchView('vault')" class="px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all bg-metalRed text-white shadow-sm">🗄 Hoveddatabase</button>
+        <button id="tab-upcoming" onclick="switchView('upcoming')" class="px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all text-neutral-400 hover:text-white">🚀 Upcoming</button>
+        <button id="tab-news" onclick="switchView('news')" class="px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all text-neutral-400 hover:text-white">📰 Nyheder</button>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="delete-selected-btn" style="display:none;" onclick="deleteSelectedAlbums()" class="bg-red-950 hover:bg-red-900 text-red-300 border border-red-900 px-3 py-2 rounded-lg text-xs font-semibold transition-all">🗑 Slet valgte (<span id="selected-count">0</span>)</button>
+        <button id="add-album-btn" style="display:none;" onclick="openAddModal()" class="bg-metalRed hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs font-semibold transition-all shadow-sm">➕ Tilføj Album</button>
+        <button id="sync-btn" style="display:none;" onclick="fetchAllData(true)" class="bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-metalBorder px-3 py-2 rounded-lg text-xs font-semibold transition-all">🔄 Synkroniser</button>
+        <button id="admin-auth-toggle" onclick="toggleAdminAuth()" class="bg-neutral-900 hover:bg-neutral-800 text-neutral-400 border border-metalBorder px-3 py-2 rounded-lg text-xs font-semibold transition-all">🔐 Admin Login</button>
       </div>
     </div>
   </header>
 
-  <main>
-    <div class="filter-panel" id="filter-panel-container">
-      <input type="text" id="search-bar" class="search-input" placeholder="🔍 Søg efter band, album, anmeldelse..." oninput="renderApp()">
-      <select id="genre-filter" class="filter-select" onchange="renderApp()">
-        <option value="">Alle genrer</option>
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Filter Panel (Hoveddatabase) -->
+    <div id="filter-panel-container" class="bg-metalCard border border-metalBorder rounded-xl p-4 md:p-6 mb-8 flex flex-wrap gap-4 items-center justify-between shadow-lg">
+      <input type="text" id="search-bar" class="flex-1 min-w-[240px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors" placeholder="🔍 Søg efter band, album, anmeldelse..." oninput="renderApp()">
+      <select id="genre-filter" class="flex-1 min-w-[160px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors cursor-pointer" onchange="renderApp()">
+        <option value="">🏷️ Alle genrer</option>
       </select>
-      <select id="year-filter" class="filter-select" onchange="renderApp()">
-        <option value="">Alle årstal</option>
+      <select id="year-filter" class="flex-1 min-w-[150px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors cursor-pointer" onchange="renderApp()">
+        <option value="">📅 Alle årstal</option>
       </select>
-      <select id="rating-filter" class="filter-select" onchange="renderApp()">
-        <option value="">Alle karakterer</option>
+      <select id="rating-filter" class="flex-1 min-w-[160px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors cursor-pointer" onchange="renderApp()">
+        <option value="">💀 Alle karakterer</option>
         <option value="missing">Mangler karakter (0)</option>
       </select>
-      <button class="reset-btn" onclick="resetFilters()">↺ Nulstil</button>
+      <button class="bg-transparent border border-metalBorder hover:bg-neutral-800 text-neutral-400 hover:text-white px-4 py-2.5 text-sm rounded-lg transition-all" onclick="resetFilters()">↺ Nulstil</button>
     </div>
 
-    <div id="content-container">
-      <div class="loading-msg">Indlæser Metal Vault...</div>
+    <!-- Filter Panel (Upcoming) -->
+    <div id="upcoming-filter-panel" style="display:none;" class="bg-metalCard border border-metalBorder rounded-xl p-4 md:p-6 mb-8 flex flex-wrap gap-4 items-center justify-between shadow-lg">
+      <input type="text" id="upcoming-search-bar" class="flex-1 min-w-[280px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors" placeholder="🔍 Søg i upcoming (band, titel, genre)..." oninput="renderApp()">
+      <select id="upcoming-genre-filter" class="flex-1 min-w-[200px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors cursor-pointer" onchange="renderApp()">
+        <option value="">🏷️ Alle genrer</option>
+      </select>
+      <button class="bg-transparent border border-metalBorder hover:bg-neutral-800 text-neutral-400 hover:text-white px-4 py-2.5 text-sm rounded-lg transition-all" onclick="resetUpcomingFilters()">↺ Nulstil</button>
     </div>
+
+    <!-- News Header Controls (Kun for Nyhedsvisning) -->
+    <div id="news-header-panel" style="display:none;" class="bg-metalCard border border-metalBorder rounded-xl p-4 md:p-6 mb-8 flex flex-col lg:flex-row gap-4 items-center justify-between shadow-lg">
+      <div id="source-filters" class="flex items-center gap-2 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0">
+        <button onclick="setSourceFilter('all')" class="source-pill active bg-metalRed text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all shadow-sm">Alle Kilder</button>
+        <button onclick="setSourceFilter('Heavymetal.dk')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all">🇩🇰 Heavymetal.dk</button>
+        <button onclick="setSourceFilter('Metal Injection')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all">Metal Injection</button>
+        <button onclick="setSourceFilter('MetalSucks')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all">MetalSucks</button>
+        <button onclick="setSourceFilter('Loudwire')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all">Loudwire</button>
+        <button onclick="setSourceFilter('Decibel Magazine')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all">Decibel Magazine</button>
+      </div>
+      <div class="flex items-center gap-3 w-full lg:w-auto justify-end">
+        <button onclick="fetchAllNews(true)" class="flex items-center gap-2 bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-metalBorder px-4 py-2 rounded-lg text-sm font-semibold transition-all">
+          <svg id="refresh-icon" class="w-4 h-4 text-metalRed transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          <span>Opdater Feed</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <div id="content-container">
+      <div class="flex flex-col items-center justify-center py-20">
+        <div class="w-12 h-12 border-4 border-metalBorder border-t-metalRed rounded-full animate-spin mb-4"></div>
+        <p class="text-neutral-400 font-medium">Indlæser Metal Vault...</p>
+      </div>
+    </div>
+
   </main>
 
-  <div class="modal-overlay" id="album-modal" onclick="closeModal('album-modal')">
-    <div class="modal" onclick="event.stopPropagation()">
-      <h2 id="album-modal-title">Tilføj Album</h2>
+  <!-- Album Modal -->
+  <div class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" id="album-modal" onclick="closeModal('album-modal')">
+    <div class="bg-metalCard border border-metalBorder rounded-2xl w-full max-w-lg p-6 md:p-8 relative max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <h2 id="album-modal-title" class="font-cinzel text-xl font-bold text-metalRed mb-6">Tilføj Album</h2>
       <input type="hidden" id="album-edit-id">
 
-      <div class="form-group">
-        <label>Band / Artist</label>
-        <input type="text" id="album-artist" placeholder="f.eks. Judas Priest">
-      </div>
-      <div class="form-group">
-        <label>Albumtitel</label>
-        <input type="text" id="album-title" placeholder="f.eks. Invincible Shield">
-      </div>
-      <div class="form-group">
-        <label>Udgivelsesdato</label>
-        <input type="date" id="album-date">
-      </div>
-      <div class="form-group">
-        <label>Genre</label>
-        <input type="text" id="album-genre" placeholder="f.eks. Heavy Metal">
-      </div>
-      <div class="form-group">
-        <label>Karakter (1 - 10)</label>
-        <select id="album-rating">
-          <option value="0">Ingen karakter endnu</option>
-          <option value="1">1 / 10</option><option value="2">2 / 10</option><option value="3">3 / 10</option>
-          <option value="4">4 / 10</option><option value="5">5 / 10</option><option value="6">6 / 10</option>
-          <option value="7">7 / 10</option><option value="8">8 / 10</option><option value="9">9 / 10</option>
-          <option value="10">10 / 10 - Mesterværk</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Album Cover</label>
-        <input type="url" id="album-cover" placeholder="https://..." oninput="updateCoverPreview(this.value)">
-        <img id="modal-cover-preview" class="modal-cover-preview" src="" alt="Cover Forhåndsvisning" onerror="this.style.display='none'">
-      </div>
-      <div class="form-group">
-        <label>Spotify Link</label>
-        <input type="url" id="album-spotify" placeholder="https://open.spotify.com/album/...">
-      </div>
-      <div class="form-group">
-        <label>Kommentar / Anmeldelse</label>
-        <textarea id="album-review" rows="3" placeholder="Tanker..."></textarea>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-neutral-400 mb-1">Band / Artist</label>
+          <input type="text" id="album-artist" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="f.eks. Judas Priest">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-neutral-400 mb-1">Albumtitel</label>
+          <input type="text" id="album-title" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="f.eks. Invincible Shield">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-neutral-400 mb-1">Udgivelsesdato</label>
+          <input type="date" id="album-date" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-neutral-400 mb-1">Genre</label>
+          <input type="text" id="album-genre" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="f.eks. Heavy Metal">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-neutral-400 mb-1">Karakter (1 - 10)</label>
+          <select id="album-rating" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed cursor-pointer">
+            <option value="0">Ingen karakter endnu</option>
+            <option value="1">1 / 10</option><option value="2">2 / 10</option><option value="3">3 / 10</option>
+            <option value="4">4 / 10</option><option value="5">5 / 10</option><option value="6">6 / 10</option>
+            <option value="7">7 / 10</option><option value="8">8 / 10</option><option value="9">9 / 10</option>
+            <option value="10">10 / 10 - Mesterværk</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-neutral-400 mb-1">Album Cover URL</label>
+          <input type="url" id="album-cover" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="https://..." oninput="updateCoverPreview(this.value)">
+          <img id="modal-cover-preview" class="w-full h-48 object-contain bg-black border border-metalBorder rounded-lg mt-3 hidden" alt="Forhåndsvisning" onerror="this.style.display='none'">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-neutral-400 mb-1">Spotify Link</label>
+          <input type="url" id="album-spotify" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="https://open.spotify.com/album/...">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-neutral-400 mb-1">Kommentar / Anmeldelse</label>
+          <textarea id="album-review" rows="3" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="Tanker om pladen..."></textarea>
+        </div>
       </div>
 
-      <button class="btn-action btn-primary" style="width:100%; justify-content:center; padding: 0.75rem;" onclick="saveAlbum()">💾 Gem Ændringer</button>
+      <div class="mt-6">
+        <button onclick="saveAlbum()" class="w-full bg-metalRed hover:bg-red-700 text-white font-semibold py-3 rounded-lg transition-all shadow-md">💾 Gem Ændringer</button>
+      </div>
     </div>
   </div>
 
@@ -464,21 +194,32 @@
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyeCVcVM7W7nrXKePgb3FZe2DynG0hUE6yc6eMigxUNXu4FPqHS0wLb0RdgodbhVnA/exec';
 
     let library = [];
+    let newsList = [];
+    let activeSource = 'all';
     let currentSort = { column: 'artist', asc: true };
+    let upcomingSort = { column: 'date', asc: true };
     let currentView = 'vault';
     let isAdmin = localStorage.getItem('metal_vault_admin') === 'true';
 
+    const SOURCES = [
+      { name: 'Heavymetal.dk', badgeColor: 'bg-red-950 text-red-400 border-red-900', url: 'https://heavymetal.dk/rss.xml' },
+      { name: 'Metal Injection', badgeColor: 'bg-zinc-800 text-zinc-300 border-zinc-700', url: 'https://metalinjection.net/feed' },
+      { name: 'MetalSucks', badgeColor: 'bg-zinc-800 text-zinc-300 border-zinc-700', url: 'https://www.metalsucks.net/feed/' },
+      { name: 'Loudwire', badgeColor: 'bg-zinc-800 text-zinc-300 border-zinc-700', url: 'https://loudwire.com/feed/' },
+      { name: 'Decibel Magazine', badgeColor: 'bg-zinc-800 text-zinc-300 border-zinc-700', url: 'https://www.decibelmagazine.com/feed/' }
+    ];
+
     window.addEventListener('DOMContentLoaded', () => {
       updateAdminUI();
-      const cached = localStorage.getItem('metal_vault_cache');
-      if (cached) {
-        try {
-          library = JSON.parse(cached);
-          populateFilterDropdowns();
-          renderApp();
-        } catch(e) {}
+      const cachedVault = localStorage.getItem('metal_vault_cache');
+      if (cachedVault) {
+        try { library = JSON.parse(cachedVault); } catch(e) {}
       }
-      fetchDataFromSheet(library.length === 0);
+      
+      populateFilterDropdowns();
+      renderApp();
+      fetchAllData(library.length === 0);
+      fetchAllNews(false);
     });
 
     function toggleAdminAuth() {
@@ -510,12 +251,12 @@
       
       if (isAdmin) {
         btn.innerText = '🔓 Log ud (Admin)';
-        btn.classList.add('logged-in');
+        btn.classList.add('bg-emerald-950', 'text-emerald-400', 'border-emerald-900');
         if (addBtn) addBtn.style.display = 'inline-flex';
         if (syncBtn) syncBtn.style.display = 'inline-flex';
       } else {
         btn.innerText = '🔐 Admin Login';
-        btn.classList.remove('logged-in');
+        btn.classList.remove('bg-emerald-950', 'text-emerald-400', 'border-emerald-900');
         if (addBtn) addBtn.style.display = 'none';
         if (syncBtn) syncBtn.style.display = 'none';
       }
@@ -523,19 +264,21 @@
 
     function switchView(view) {
       currentView = view;
-      document.getElementById('tab-vault').classList.toggle('active', view === 'vault');
-      document.getElementById('tab-upcoming').classList.toggle('active', view === 'upcoming');
+      document.getElementById('tab-vault').className = view === 'vault' ? 'px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all bg-metalRed text-white shadow-sm' : 'px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all text-neutral-400 hover:text-white';
+      document.getElementById('tab-upcoming').className = view === 'upcoming' ? 'px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all bg-metalRed text-white shadow-sm' : 'px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all text-neutral-400 hover:text-white';
+      document.getElementById('tab-news').className = view === 'news' ? 'px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all bg-metalRed text-white shadow-sm' : 'px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all text-neutral-400 hover:text-white';
       
-      const filterPanel = document.getElementById('filter-panel-container');
-      if (filterPanel) filterPanel.style.display = (view === 'vault') ? 'flex' : 'none';
+      document.getElementById('filter-panel-container').style.display = (view === 'vault') ? 'flex' : 'none';
+      document.getElementById('upcoming-filter-panel').style.display = (view === 'upcoming') ? 'flex' : 'none';
+      document.getElementById('news-header-panel').style.display = (view === 'news') ? 'flex' : 'none';
       
       renderApp();
     }
 
-    function fetchDataFromSheet(showLoadingMsg) {
+    function fetchAllData(showLoadingMsg) {
       const container = document.getElementById('content-container');
       if (showLoadingMsg && library.length === 0 && container) {
-        container.innerHTML = '<div class="loading-msg">Henter data fra Google Sheets...</div>';
+        container.innerHTML = '<div class="flex flex-col items-center justify-center py-20"><div class="w-12 h-12 border-4 border-metalBorder border-t-metalRed rounded-full animate-spin mb-4"></div><p class="text-neutral-400 font-medium">Henter database fra Google Sheets...</p></div>';
       }
 
       fetch(SCRIPT_URL + '?t=' + new Date().getTime())
@@ -546,30 +289,81 @@
             localStorage.setItem('metal_vault_cache', JSON.stringify(library));
             populateFilterDropdowns();
             renderApp();
-          } else {
-            if (library.length === 0 && container) {
-              container.innerHTML = '<div class="error-msg">Ugyldig data modtaget fra serveren.</div>';
-            }
           }
         })
-        .catch(err => {
-          console.error('Fejl ved hentning:', err);
-          if (library.length === 0 && container) {
-            container.innerHTML = '<div class="error-msg">Kunne ikke hente data.<br><br><button class="btn-action btn-primary" onclick="fetchDataFromSheet(true)">Prøv igen</button></div>';
+        .catch(err => console.error('Fejl ved hentning af album:', err));
+    }
+
+    async function fetchAllNews(isManualRefresh) {
+      const refreshIcon = document.getElementById('refresh-icon');
+      if (isManualRefresh && refreshIcon) refreshIcon.classList.add('animate-spin');
+
+      let fetchedArticles = [];
+      const fetchPromises = SOURCES.map(async (src) => {
+        try {
+          const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}`;
+          const response = await fetch(apiUrl);
+          const data = await response.json();
+
+          if (data && data.status === 'ok' && Array.isArray(data.items)) {
+            return data.items.map(item => {
+              let imageUrl = item.thumbnail || (item.enclosure ? item.enclosure.link : null);
+              if (!imageUrl && item.content) {
+                const imgMatch = item.content.match(/src="([^"]+)"/);
+                if (imgMatch) imageUrl = imgMatch[1];
+              }
+
+              let cleanSnippet = item.description || item.content || '';
+              cleanSnippet = cleanSnippet.replace(/<\/?[^>]+(>|$)/g, "");
+              if (cleanSnippet.length > 180) {
+                cleanSnippet = cleanSnippet.substring(0, 180) + '...';
+              }
+
+              return {
+                title: item.title || 'Uden titel',
+                link: item.link || '#',
+                pubDate: item.pubDate || new Date().toISOString(),
+                source: src.name,
+                snippet: cleanSnippet || 'Ingen beskrivelse tilgængelig.',
+                image: imageUrl || `https://placehold.co/600x400/141418/dc2626?text=${encodeURIComponent(src.name)}`
+              };
+            });
           }
-        });
+        } catch (err) {
+          console.warn(`Kunne ikke hente feed fra ${src.name}:`, err);
+        }
+        return [];
+      });
+
+      const results = await Promise.all(fetchPromises);
+      results.forEach(articles => {
+        if (articles && articles.length > 0) {
+          fetchedArticles = fetchedArticles.concat(articles);
+        }
+      });
+
+      if (fetchedArticles.length > 0) {
+        fetchedArticles.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+        newsList = fetchedArticles;
+      }
+
+      if (isManualRefresh && refreshIcon) {
+        setTimeout(() => refreshIcon.classList.remove('animate-spin'), 500);
+      }
+
+      if (currentView === 'news') {
+        renderApp();
+      }
     }
 
     function sendToSheet(paramsObj) {
       const queryParams = new URLSearchParams(paramsObj);
       queryParams.append('t', new Date().getTime());
-      const url = SCRIPT_URL + '?' + queryParams.toString();
-
-      fetch(url, { method: 'GET', mode: 'no-cors' })
+      fetch(SCRIPT_URL + '?' + queryParams.toString(), { method: 'GET', mode: 'no-cors' })
         .then(() => {
           setTimeout(() => {
             localStorage.removeItem('metal_vault_cache');
-            fetchDataFromSheet(false);
+            fetchAllData(false);
           }, 1500);
         })
         .catch(err => console.error('Synkroniseringsfejl:', err));
@@ -578,10 +372,12 @@
     function populateFilterDropdowns() {
       const genreSelect = document.getElementById('genre-filter');
       const yearSelect = document.getElementById('year-filter');
-      if (!genreSelect || !yearSelect) return;
+      const upcomingGenreSelect = document.getElementById('upcoming-genre-filter');
+      if (!genreSelect || !yearSelect || !upcomingGenreSelect) return;
       
       const currentGenre = genreSelect.value;
       const currentYear = yearSelect.value;
+      const currentUpcomingGenre = upcomingGenreSelect.value;
 
       const genres = [...new Set(library.map(i => String(i.genre || '').trim()).filter(Boolean))].sort();
       const years = [...new Set(library.map(i => {
@@ -590,11 +386,13 @@
         return d && !isNaN(d) ? d.getFullYear() : '';
       }).filter(Boolean))].sort((a, b) => b - a);
 
-      genreSelect.innerHTML = '<option value="">Alle genrer</option>' + genres.map(g => '<option value="' + g + '">' + g + '</option>').join('');
-      yearSelect.innerHTML = '<option value="">Alle årstal</option>' + years.map(y => '<option value="' + y + '">' + y + '</option>').join('');
+      genreSelect.innerHTML = '<option value="">🏷️ Alle genrer</option>' + genres.map(g => `<option value="${g}">${g}</option>`).join('');
+      yearSelect.innerHTML = '<option value="">📅 Alle årstal</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+      upcomingGenreSelect.innerHTML = '<option value="">🏷️ Alle genrer</option>' + genres.map(g => `<option value="${g}">${g}</option>`).join('');
 
       genreSelect.value = currentGenre;
       yearSelect.value = currentYear;
+      upcomingGenreSelect.value = currentUpcomingGenre;
     }
 
     function updateCoverPreview(url) {
@@ -602,15 +400,15 @@
       if (!preview) return;
       if (url && url.trim() !== '') {
         preview.src = url;
-        preview.style.display = 'block';
+        preview.classList.remove('hidden');
       } else {
-        preview.style.display = 'none';
+        preview.classList.add('hidden');
       }
     }
 
     function openAddModal() {
       if (!isAdmin) return;
-      document.getElementById('album-modal').classList.add('active');
+      document.getElementById('album-modal').classList.remove('hidden');
       document.getElementById('album-modal-title').innerText = 'Tilføj Nyt Album';
       document.getElementById('album-edit-id').value = '';
       document.getElementById('album-artist').value = '';
@@ -624,28 +422,8 @@
       updateCoverPreview('');
     }
 
-    function openEditModal(id) {
-      if (!isAdmin) return;
-      const item = library.find(i => String(i.id) === String(id));
-      if (!item) return;
-
-      document.getElementById('album-modal').classList.add('active');
-      document.getElementById('album-modal-title').innerText = 'Rediger Album';
-      document.getElementById('album-edit-id').value = item.id;
-      document.getElementById('album-artist').value = item.artist || '';
-      document.getElementById('album-title').value = item.title || '';
-      document.getElementById('album-date').value = item.date ? String(item.date).split('T')[0] : '';
-      document.getElementById('album-genre').value = item.genre || '';
-      document.getElementById('album-rating').value = item.rating || 0;
-      document.getElementById('album-cover').value = item.cover || '';
-      document.getElementById('album-spotify').value = item.spotify || '';
-      document.getElementById('album-review').value = item.review || '';
-      updateCoverPreview(item.cover || '');
-    }
-
     function closeModal(id) {
-      const modal = document.getElementById(id);
-      if (modal) modal.classList.remove('active');
+      document.getElementById(id).classList.add('hidden');
     }
 
     function saveAlbum() {
@@ -684,71 +462,20 @@
       localStorage.setItem('metal_vault_cache', JSON.stringify(library));
       renderApp();
       
-      sendToSheet({
-        action: 'updaterating',
-        artist: item.artist || '',
-        title: item.title || '',
-        rating: item.rating
-      });
-    }
-
-    function makeEditable(cellElement, id, field) {
-      if (!isAdmin) return;
-      if (cellElement.querySelector('input')) return;
-
-      const item = library.find(i => String(i.id) === String(id));
-      if (!item) return;
-
-      const currentValue = field === 'date' ? (item[field] ? String(item[field]).split('T')[0] : '') : (item[field] || '');
-      const inputType = field === 'date' ? 'date' : 'text';
-
-      cellElement.innerHTML = '<input type="' + inputType + '" class="inline-edit-input" value="' + currentValue.replace(/"/g, '&quot;') + '" onclick="event.stopPropagation()">';
-      const input = cellElement.querySelector('input');
-      input.focus();
-
-      const saveChanges = () => {
-        const newVal = input.value;
-        if (newVal !== currentValue) {
-          item[field] = newVal;
-          localStorage.setItem('metal_vault_cache', JSON.stringify(library));
-          populateFilterDropdowns();
-          renderApp();
-
-          sendToSheet({
-            action: 'save',
-            artist: item.artist || '',
-            title: item.title || '',
-            date: item.date || '',
-            genre: item.genre || '',
-            rating: item.rating || 0,
-            cover: item.cover || '',
-            spotify: item.spotify || '',
-            review: item.review || ''
-          });
-        } else {
-          renderApp();
-        }
-      };
-
-      input.addEventListener('blur', saveChanges);
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          saveChanges();
-        } else if (e.key === 'Escape') {
-          renderApp();
-        }
-      });
+      sendToSheet({ action: 'updaterating', artist: item.artist || '', title: item.title || '', rating: item.rating });
     }
 
     function resetFilters() {
-      const searchBar = document.getElementById('search-bar');
-      const genreFilter = document.getElementById('genre-filter');
-      const yearFilter = document.getElementById('year-filter');
-      const ratingFilter = document.getElementById('rating-filter');
-      if (searchBar) searchBar.value = '';
-      if (genreFilter) genreFilter.value = '';
-      if (yearFilter) yearFilter.value = '';
-      if (ratingFilter) ratingFilter.value = '';
+      document.getElementById('search-bar').value = '';
+      document.getElementById('genre-filter').value = '';
+      document.getElementById('year-filter').value = '';
+      document.getElementById('rating-filter').value = '';
+      renderApp();
+    }
+
+    function resetUpcomingFilters() {
+      document.getElementById('upcoming-search-bar').value = '';
+      document.getElementById('upcoming-genre-filter').value = '';
       renderApp();
     }
 
@@ -762,9 +489,18 @@
       renderApp();
     }
 
+    function sortUpcomingTable(column) {
+      if (upcomingSort.column === column) {
+        upcomingSort.asc = !upcomingSort.asc;
+      } else {
+        upcomingSort.column = column;
+        upcomingSort.asc = true;
+      }
+      renderApp();
+    }
+
     function toggleSelectAll(master) {
-      const checkboxes = document.querySelectorAll('.row-checkbox');
-      checkboxes.forEach(cb => cb.checked = master.checked);
+      document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = master.checked);
       updateSelectedCount();
     }
 
@@ -783,218 +519,79 @@
       const checked = document.querySelectorAll('.row-checkbox:checked');
       if (checked.length === 0) return;
 
-      if (!confirm('Er du sikker på, at du vil slette ' + checked.length + ' album(s)?')) return;
+      if (!confirm(`Er du sikker på, at du vil slette ${checked.length} valgte album?`)) return;
 
-      const idsToDelete = Array.from(checked).map(cb => {
-        const id = cb.value;
-        const item = library.find(i => String(i.id) === String(id));
-        if (item) {
-          const artist = (item.artist || '').trim().toLowerCase();
-          const title = (item.title || '').trim().toLowerCase();
-          return artist + "___" + title;
-        }
-        return "";
-      }).filter(Boolean);
-      
-      library = library.filter((i, idx) => !Array.from(checked).some(cb => String(cb.value) === String(i.id || "row_" + (idx+1))));
+      const keysToDelete = Array.from(checked).map(cb => cb.getAttribute('data-key'));
+      library = library.filter(i => !keysToDelete.includes((i.artist + '___' + i.title)));
+
       localStorage.setItem('metal_vault_cache', JSON.stringify(library));
       populateFilterDropdowns();
       renderApp();
 
-      sendToSheet({
-        action: 'delete',
-        ids: idsToDelete.join(',')
+      keysToDelete.forEach(k => {
+        const parts = k.split('___');
+        sendToSheet({ action: 'delete', artist: parts[0], title: parts[1] });
       });
     }
 
     function addOneDay(dateString) {
       if (!dateString) return null;
-      const clean = String(dateString).split('T')[0];
-      const parts = clean.split('-');
-      if (parts.length !== 3) return new Date(dateString);
-      
-      const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      const d = new Date(dateString);
+      if (isNaN(d)) return null;
       d.setDate(d.getDate() + 1);
       return d;
     }
 
-    function formatDateDK(dateString) {
-      if (!dateString) return '';
-      const d = addOneDay(dateString);
-      if (!d || isNaN(d)) return dateString;
-      
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = d.getFullYear();
-      return day + '-' + month + '-' + year;
-    }
-
-    function parseLocalDate(dateString) {
-      return addOneDay(dateString);
-    }
-
-    function getDaysUntil(dateString) {
-      if (!dateString) return null;
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      const target = parseLocalDate(dateString);
-      if (!target) return null;
-      target.setHours(0,0,0,0);
-      const diffTime = target - today;
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    }
-
-    function renderSkulls(rating, rowId) {
-      const r = parseInt(rating) || 0;
-      let html = '<div class="metal-rating-container" title="' + r + '/10 karakter">';
-      
-      for (let i = 1; i <= 5; i++) {
-        const skullVal = i * 2;
-        if (r >= skullVal) {
-          html += '<span class="metal-skull active">💀</span>';
-        } else if (r === skullVal - 1) {
-          html += '<span class="metal-skull half">💀</span>';
+    function setSourceFilter(sourceName) {
+      activeSource = sourceName;
+      document.querySelectorAll('.source-pill').forEach(btn => {
+        if (btn.textContent.includes(sourceName) || (sourceName === 'all' && btn.textContent === 'Alle Kilder')) {
+          btn.className = 'source-pill active bg-metalRed text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all shadow-sm';
         } else {
-          html += '<span class="metal-skull">💀</span>';
+          btn.className = 'source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all';
         }
-      }
-
-      if (r > 0) {
-        html += '<span class="rating-text-label">' + r + '/10</span>';
-      } else {
-        html += '<span class="rating-text-label" style="opacity:0.4;">-</span>';
-      }
-
-      if (isAdmin) {
-        html += '<div class="rating-popup" onclick="event.stopPropagation()">';
-        for (let score = 1; score <= 10; score++) {
-          html += '<button class="popup-skull-btn" onclick="updateRatingDirect(\'' + rowId + '\', ' + score + ', event)" title="' + score + '/10">💀</button>';
-        }
-        html += '</div>';
-      }
-
-      html += '</div>';
-      return html;
-    }
-
-    function renderUpcomingView(container) {
-      const today = new Date();
-      today.setHours(0,0,0,0);
-
-      const searchTerm = document.getElementById('upcoming-search-bar')?.value.toLowerCase() || '';
-
-      const upcoming = library.filter(item => {
-        if (!item.date) return false;
-        const target = parseLocalDate(item.date);
-        if (!target) return false;
-        target.setHours(0,0,0,0);
-        if (target < today) return false;
-
-        return Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm));
-      }).sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date));
-
-      const getArrow = (col) => currentSort.column === col ? (currentSort.asc ? '▲' : '▼') : '';
-
-      container.innerHTML = '<div class="filter-panel">' +
-        '<input type="text" id="upcoming-search-bar" class="search-input" placeholder="🔍 Søg i upcoming..." value="' + searchTerm + '" oninput="renderUpcomingView(document.getElementById(\'content-container\'))">' +
-      '</div>';
-
-      if (upcoming.length === 0) {
-        container.innerHTML += '<div class="loading-msg">Ingen upcoming releases fundet, der matcher dine filtre.</div>';
-        updateSelectedCount();
-        return;
-      }
-
-      container.innerHTML += '<div class="table-container">' +
-        '<table class="vault-table">' +
-          '<thead>' +
-            '<tr>' +
-              '<th style="width: 45px;"><input type="checkbox" onclick="toggleSelectAll(this)"></th>' +
-              '<th><div class="th-content" onclick="sortTable(\'artist\')">Band <span>' + getArrow('artist') + '</span></div></th>' +
-              '<th><div class="th-content" onclick="sortTable(\'title\')">Albumtitel <span>' + getArrow('title') + '</span></div></th>' +
-              '<th style="width: 150px;"><div class="th-content" onclick="sortTable(\'date\')">Udgivelsesdato <span>' + getArrow('date') + '</span></div></th>' +
-              '<th style="width: 170px;"><div class="th-content" onclick="sortTable(\'genre\')">Genre <span>' + getArrow('genre') + '</span></div></th>' +
-              '<th style="width: 180px;">Status</th>' +
-            '</tr>' +
-          '</thead>' +
-          '<tbody>' +
-            upcoming.map((item, idx) => {
-              const days = getDaysUntil(item.date);
-              const formattedDate = formatDateDK(item.date);
-              const rowId = item.id || ("row_" + (idx+1));
-              const rowClass = isAdmin ? 'clickable-row' : '';
-              
-              let badgeHtml = '';
-              if (days === 0) {
-                badgeHtml = '<div class="countdown-badge today">🔥 I DAG!</div>';
-              } else if (days === 1) {
-                badgeHtml = '<div class="countdown-badge">⏳ I morgen</div>';
-              } else if (days > 1) {
-                badgeHtml = '<div class="countdown-badge">⏳ Om ' + days + ' dage</div>';
-              }
-
-              return '<tr class="' + rowClass + '" ' + (isAdmin ? 'onclick="openEditModal(\'' + rowId + '\')"' : '') + '>' +
-                '<td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" value="' + rowId + '" onchange="updateSelectedCount()"></td>' +
-                '<td ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'artist\'); event.stopPropagation();"' : '') + '>' + (item.artist || '') + '</td>' +
-                '<td style="font-weight:600;" ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'title\'); event.stopPropagation();"' : '') + '>' +
-                  '<div style="display: flex; align-items: center; gap: 10px;">' +
-                    (item.cover ? '<img src="' + item.cover + '" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0;" onerror="this.style.display=\'none\'">' : '') +
-                    '<span>' + (item.title || '') + '</span>' +
-                    (item.spotify ? '<a href="' + item.spotify + '" target="_blank" onclick="event.stopPropagation()" title="Åbn i Spotify" style="color: #1DB954; font-size: 1.2rem; text-decoration: none; margin-left: auto; flex-shrink: 0;">🟢</a>' : '') +
-                  '</div>' +
-                '</td>' +
-                '<td ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'date\'); event.stopPropagation();"' : '') + '>' + formattedDate + '</td>' +
-                '<td ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'genre\'); event.stopPropagation();"' : '') + '>' + (item.genre || '') + '</td>' +
-                '<td>' + badgeHtml + '</td>' +
-              '</tr>';
-            }).join('') +
-          '</tbody>' +
-        '</table>' +
-      '</div>';
-      
-      updateSelectedCount();
+      });
+      renderApp();
     }
 
     function renderApp() {
       const container = document.getElementById('content-container');
       if (!container) return;
 
+      if (currentView === 'news') {
+        renderNewsView(container);
+        return;
+      }
+
       if (currentView === 'upcoming') {
         renderUpcomingView(container);
         return;
       }
 
-      const today = new Date();
-      today.setHours(0,0,0,0);
-
-      const searchTerm = document.getElementById('search-bar')?.value.toLowerCase() || '';
-      const selectedGenre = document.getElementById('genre-filter')?.value || '';
-      const selectedYear = document.getElementById('year-filter')?.value || '';
-      const selectedRatingFilter = document.getElementById('rating-filter')?.value || '';
+      // Hoveddatabase (Vault med 5 kranier og Cover Thumbnail)
+      const searchVal = (document.getElementById('search-bar')?.value || '').toLowerCase();
+      const genreVal = document.getElementById('genre-filter')?.value || '';
+      const yearVal = document.getElementById('year-filter')?.value || '';
+      const ratingVal = document.getElementById('rating-filter')?.value || '';
 
       let filtered = library.filter(item => {
-        if (item.date) {
-          const target = parseLocalDate(item.date);
-          if (target) {
-            target.setHours(0,0,0,0);
-            if (target > today) return false;
-          }
-        }
+        const artist = String(item.artist || '').toLowerCase();
+        const title = String(item.title || '').toLowerCase();
+        const genre = String(item.genre || '').toLowerCase();
+        const review = String(item.review || '').toLowerCase();
 
-        const matchesSearch = Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm));
-        const matchesGenre = !selectedGenre || String(item.genre || '').trim().toLowerCase() === selectedGenre.toLowerCase();
+        const matchesSearch = !searchVal || artist.includes(searchVal) || title.includes(searchVal) || genre.includes(searchVal) || review.includes(searchVal);
+        const matchesGenre = !genreVal || String(item.genre || '').trim() === genreVal;
         
         let matchesYear = true;
-        if (selectedYear) {
+        if (yearVal) {
           const d = addOneDay(item.date);
-          const itemYear = d && !isNaN(d) ? String(d.getFullYear()) : '';
-          matchesYear = itemYear === selectedYear;
+          matchesYear = d && !isNaN(d) && String(d.getFullYear()) === yearVal;
         }
 
         let matchesRating = true;
-        if (selectedRatingFilter === 'missing') {
-          const r = String(item.rating || '').trim();
-          matchesRating = (r === '' || r === '0' || isNaN(Number(r)) || Number(r) === 0);
+        if (ratingVal === 'missing') {
+          matchesRating = (!item.rating || parseInt(item.rating) === 0);
         }
 
         return matchesSearch && matchesGenre && matchesYear && matchesRating;
@@ -1003,12 +600,16 @@
       filtered.sort((a, b) => {
         let valA = a[currentSort.column] || '';
         let valB = b[currentSort.column] || '';
-        if (currentSort.column === 'date') {
-          valA = addOneDay(a.date) || new Date(0);
-          valB = addOneDay(b.date) || new Date(0);
+
+        if (currentSort.column === 'rating') {
+          valA = parseInt(valA) || 0;
+          valB = parseInt(valB) || 0;
+        } else if (currentSort.column === 'date') {
+          valA = valA ? new Date(valA).getTime() : 0;
+          valB = valB ? new Date(valB).getTime() : 0;
         } else {
-          if (typeof valA === 'string') valA = valA.toLowerCase();
-          if (typeof valB === 'string') valB = valB.toLowerCase();
+          valA = String(valA).toLowerCase();
+          valB = String(valB).toLowerCase();
         }
 
         if (valA < valB) return currentSort.asc ? -1 : 1;
@@ -1017,54 +618,277 @@
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = '<div class="loading-msg">Ingen albums fundet, der matcher dine filtre.</div>';
-        updateSelectedCount();
+        container.innerHTML = '<div class="bg-metalCard border border-metalBorder rounded-xl text-center py-16 text-neutral-400">Ingen metal-albums fundet i databasen.</div>';
         return;
       }
 
-      const getArrow = (col) => currentSort.column === col ? (currentSort.asc ? '▲' : '▼') : '';
+      let html = `
+        <div class="bg-metalCard border border-metalBorder rounded-xl overflow-x-auto shadow-xl">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-neutral-900/85 text-neutral-400 text-xs font-semibold uppercase tracking-wider border-b border-metalBorder">
+                ${isAdmin ? '<th class="p-4 w-10"><input type="checkbox" onclick="toggleSelectAll(this)"></th>' : ''}
+                <th class="p-4 w-16 text-center">Cover</th>
+                <th class="p-4 cursor-pointer hover:text-white" onclick="sortTable('artist')">Band / Artist ${currentSort.column === 'artist' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
+                <th class="p-4 cursor-pointer hover:text-white" onclick="sortTable('title')">Albumtitel ${currentSort.column === 'title' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
+                <th class="p-4 cursor-pointer hover:text-white" onclick="sortTable('date')">Udgivelsesdato ${currentSort.column === 'date' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
+                <th class="p-4 cursor-pointer hover:text-white" onclick="sortTable('genre')">Genre ${currentSort.column === 'genre' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
+                <th class="p-4 cursor-pointer hover:text-white" onclick="sortTable('rating')">Karakter ${currentSort.column === 'rating' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
+                <th class="p-4">Spotify</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-metalBorder text-sm">
+      `;
 
-      container.innerHTML = '<div class="table-container">' +
-        '<table class="vault-table" id="main-vault-table">' +
-          '<thead>' +
-            '<tr>' +
-              '<th style="width: 45px;"><input type="checkbox" onclick="toggleSelectAll(this)"></th>' +
-              '<th><div class="th-content" onclick="sortTable(\'artist\')">Band <span>' + getArrow('artist') + '</span></div></th>' +
-              '<th><div class="th-content" onclick="sortTable(\'title\')">Albumtitel <span>' + getArrow('title') + '</span></div></th>' +
-              '<th style="width: 150px;"><div class="th-content" onclick="sortTable(\'date\')">Udgivelsesdato <span>' + getArrow('date') + '</span></div></th>' +
-              '<th style="width: 170px;"><div class="th-content" onclick="sortTable(\'genre\')">Genre <span>' + getArrow('genre') + '</span></div></th>' +
-              '<th style="width: 190px;"><div class="th-content" onclick="sortTable(\'rating\')">Karakter <span>' + getArrow('rating') + '</span></div></th>' +
-            '</tr>' +
-          '</thead>' +
-          '<tbody>' +
-            filtered.map((item, idx) => {
-              const formattedDate = formatDateDK(item.date);
-              const rVal = String(item.rating || '').trim();
-              const missingRating = (rVal === '' || rVal === '0' || Number(rVal) === 0 || isNaN(Number(rVal)));
-              const rowClass = (missingRating ? 'row-missing-rating ' : '') + (isAdmin ? 'clickable-row' : '');
-              const rowId = item.id || ("row_" + (idx+1));
-              const skullRatingHtml = renderSkulls(item.rating || 0, rowId);
+      filtered.forEach(item => {
+        const rating = parseInt(item.rating) || 0;
+        const isMissingRating = rating === 0;
+        const rowClass = isMissingRating ? 'hover:bg-red-950/20 bg-red-950/10 cursor-pointer transition-colors' : 'hover:bg-neutral-900/50 cursor-pointer transition-colors';
+        const uniqueKey = (item.artist || '') + '___' + (item.title || '');
 
-              return '<tr class="' + rowClass + '" ' + (isAdmin ? 'onclick="openEditModal(\'' + rowId + '\')"' : '') + '>' +
-                '<td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" value="' + rowId + '" onchange="updateSelectedCount()"></td>' +
-                '<td ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'artist\'); event.stopPropagation();"' : '') + '>' + (item.artist || '') + '</td>' +
-                '<td style="font-weight:600;" ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'title\'); event.stopPropagation();"' : '') + '>' +
-                  '<div style="display: flex; align-items: center; gap: 10px;">' +
-                    (item.cover ? '<img src="' + item.cover + '" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0;" onerror="this.style.display=\'none\'">' : '') +
-                    '<span>' + (item.title || '') + '</span>' +
-                    (item.spotify ? '<a href="' + item.spotify + '" target="_blank" onclick="event.stopPropagation()" title="Åbn i Spotify" style="color: #1DB954; font-size: 1.2rem; text-decoration: none; margin-left: auto; flex-shrink: 0;">🟢</a>' : '') +
-                  '</div>' +
-                '</td>' +
-                '<td ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'date\'); event.stopPropagation();"' : '') + '>' + formattedDate + '</td>' +
-                '<td ' + (isAdmin ? 'ondblclick="makeEditable(this, \'' + rowId + '\', \'genre\'); event.stopPropagation();"' : '') + '>' + (item.genre || '') + '</td>' +
-                '<td onclick="event.stopPropagation()">' + skullRatingHtml + '</td>' +
-              '</tr>';
-            }).join('') +
-          '</tbody>' +
-        '</table>' +
-      '</div>';
-      
+        let skullsHtml = '';
+        for (let s = 1; s <= 5; s++) {
+          const skullValue = s * 2;
+          let skullStyle = 'color: #3f3f46;';
+          let titleText = `${s * 2 - 1}-${s * 2}/10`;
+
+          if (rating >= skullValue) {
+            skullStyle = 'color: #dc2626; filter: drop-shadow(0 0 6px rgba(220,38,38,0.7));';
+          } else if (rating === skullValue - 1) {
+            skullStyle = 'background: linear-gradient(90deg, #dc2626 50%, #3f3f46 50%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;';
+          }
+
+          skullsHtml += `<span class="text-base cursor-pointer hover:scale-125 transition-transform inline-block" style="${skullStyle}" onclick="updateRatingDirect('${item.id || uniqueKey}', ${skullValue}, event)" title="${titleText}">💀</span>`;
+        }
+
+        let formattedDate = '-';
+        if (item.date) {
+          const d = addOneDay(item.date);
+          if (d && !isNaN(d)) {
+            formattedDate = d.toLocaleDateString('da-DK', { year: 'numeric', month: 'short', day: 'numeric' });
+          }
+        }
+
+        html += `
+          <tr class="${rowClass}" onclick="openEditModalFromRow('${encodeURIComponent(uniqueKey)}')">
+            ${isAdmin ? `<td class="p-4" onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" data-key="${uniqueKey}" onclick="updateSelectedCount()"></td>` : ''}
+            <td class="p-3 text-center">
+              ${item.cover ? `<img src="${item.cover}" alt="Cover" class="w-10 h-10 object-cover rounded bg-neutral-950 border border-metalBorder mx-auto" onerror="this.style.display='none'">` : '<div class="w-10 h-10 rounded bg-neutral-900 border border-metalBorder flex items-center justify-center text-xs mx-auto">💿</div>'}
+            </td>
+            <td class="p-4 font-bold text-neutral-100">${item.artist || '-'}</td>
+            <td class="p-4 text-neutral-300">${item.title || '-'}</td>
+            <td class="p-4 text-neutral-400">${formattedDate}</td>
+            <td class="p-4 text-neutral-400">${item.genre || '-'}</td>
+            <td class="p-4">
+              <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-0.5">${skullsHtml}</div>
+                <span class="text-xs font-semibold text-neutral-400 ml-1">${rating > 0 ? rating + '/10' : 'Mangler'}</span>
+              </div>
+            </td>
+            <td class="p-4">
+              ${item.spotify ? `<a href="${item.spotify}" target="_blank" onclick="event.stopPropagation()" class="text-emerald-400 hover:text-emerald-300 font-semibold text-sm flex items-center gap-1.5">🎧 Lyt</a>` : '-'}
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
       updateSelectedCount();
+    }
+
+    function renderUpcomingView(container) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      const searchVal = (document.getElementById('upcoming-search-bar')?.value || '').toLowerCase();
+      const genreVal = document.getElementById('upcoming-genre-filter')?.value || '';
+
+      const upcoming = library.filter(item => {
+        if (!item.date) return false;
+        const d = addOneDay(item.date);
+        if (!d || isNaN(d) || d < today) return false;
+
+        const artist = String(item.artist || '').toLowerCase();
+        const title = String(item.title || '').toLowerCase();
+        const genre = String(item.genre || '').toLowerCase();
+        const review = String(item.review || '').toLowerCase();
+
+        const matchesSearch = !searchVal || artist.includes(searchVal) || title.includes(searchVal) || genre.includes(searchVal) || review.includes(searchVal);
+        const matchesGenre = !genreVal || String(item.genre || '').trim() === genreVal;
+
+        return matchesSearch && matchesGenre;
+      });
+
+      upcoming.sort((a, b) => {
+        let valA = a[upcomingSort.column] || '';
+        let valB = b[upcomingSort.column] || '';
+
+        if (upcomingSort.column === 'date') {
+          valA = valA ? new Date(valA).getTime() : 0;
+          valB = valB ? new Date(valB).getTime() : 0;
+        } else {
+          valA = String(valA).toLowerCase();
+          valB = String(valB).toLowerCase();
+        }
+
+        if (valA < valB) return upcomingSort.asc ? -1 : 1;
+        if (valA > valB) return upcomingSort.asc ? 1 : -1;
+        return 0;
+      });
+
+      if (upcoming.length === 0) {
+        container.innerHTML = '<div class="bg-metalCard border border-metalBorder rounded-xl text-center py-16 text-neutral-400">Ingen upcoming albums fundet, der matcher din søgning.</div>';
+        return;
+      }
+
+      let html = `
+        <div class="bg-metalCard border border-metalBorder rounded-xl overflow-x-auto shadow-xl">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-neutral-900/85 text-neutral-400 text-xs font-semibold uppercase tracking-wider border-b border-metalBorder">
+                <th class="p-4 w-16 text-center">Cover</th>
+                <th class="p-4 cursor-pointer hover:text-white" onclick="sortUpcomingTable('artist')">Band / Artist ${upcomingSort.column === 'artist' ? (upcomingSort.asc ? '▲' : '▼') : ''}</th>
+                <th class="p-4 cursor-pointer hover:text-white" onclick="sortUpcomingTable('title')">Albumtitel ${upcomingSort.column === 'title' ? (upcomingSort.asc ? '▲' : '▼') : ''}</th>
+                <th class="p-4 cursor-pointer hover:text-white" onclick="sortUpcomingTable('date')">Udgivelsesdato ${upcomingSort.column === 'date' ? (upcomingSort.asc ? '▲' : '▼') : ''}</th>
+                <th class="p-4 cursor-pointer hover:text-white" onclick="sortUpcomingTable('genre')">Genre ${upcomingSort.column === 'genre' ? (upcomingSort.asc ? '▲' : '▼') : ''}</th>
+                <th class="p-4">Status</th>
+                <th class="p-4">Spotify</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-metalBorder text-sm">
+      `;
+
+      upcoming.forEach(item => {
+        const d = addOneDay(item.date);
+        const diffTime = d - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        let badgeText = `Om ${diffDays} dage`;
+        let badgeClass = 'bg-red-950 text-red-400 border-red-900';
+        if (diffDays === 0) {
+          badgeText = 'Udgives i dag! 🎸';
+          badgeClass = 'bg-emerald-950 text-emerald-400 border-emerald-900';
+        } else if (diffDays === 1) {
+          badgeText = 'Udgives i morgen';
+        }
+
+        let formattedDate = d.toLocaleDateString('da-DK', { year: 'numeric', month: 'short', day: 'numeric' });
+        const uniqueKey = (item.artist || '') + '___' + (item.title || '');
+
+        html += `
+          <tr class="hover:bg-neutral-900/50 cursor-pointer transition-colors" onclick="openEditModalFromRow('${encodeURIComponent(uniqueKey)}')">
+            <td class="p-3 text-center">
+              ${item.cover ? `<img src="${item.cover}" alt="Cover" class="w-10 h-10 object-cover rounded bg-neutral-950 border border-metalBorder mx-auto" onerror="this.style.display='none'">` : '<div class="w-10 h-10 rounded bg-neutral-900 border border-metalBorder flex items-center justify-center text-xs mx-auto">💿</div>'}
+            </td>
+            <td class="p-4 font-bold text-neutral-100">${item.artist || '-'}</td>
+            <td class="p-4 text-neutral-300">${item.title || '-'}</td>
+            <td class="p-4 text-neutral-400">${formattedDate}</td>
+            <td class="p-4 text-neutral-400">${item.genre || '-'}</td>
+            <td class="p-4">
+              <span class="text-xs font-bold px-2.5 py-1 rounded-md border ${badgeClass} inline-block">${badgeText}</span>
+            </td>
+            <td class="p-4">
+              ${item.spotify ? `<a href="${item.spotify}" target="_blank" onclick="event.stopPropagation()" class="text-emerald-400 hover:text-emerald-300 font-semibold text-sm flex items-center gap-1.5">🎧 Lyt</a>` : '-'}
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+    }
+
+    function renderNewsView(container) {
+      let filteredNews = newsList;
+      if (activeSource !== 'all') {
+        filteredNews = newsList.filter(n => n.source === activeSource);
+      }
+
+      if (filteredNews.length === 0) {
+        container.innerHTML = `
+          <div class="bg-metalCard border border-metalBorder rounded-xl text-center py-16">
+            <div class="w-10 h-10 border-4 border-metalBorder border-t-metalRed rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-neutral-400 text-lg">Henter nyheder fra RSS-feeds...</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`;
+      filteredNews.forEach(item => {
+        const sourceObj = SOURCES.find(s => s.name === item.source);
+        const badgeClass = sourceObj ? sourceObj.badgeColor : 'bg-red-950 text-red-400 border-red-900';
+        
+        let formattedDate = '';
+        try {
+          const d = new Date(item.pubDate);
+          if (!isNaN(d)) {
+            formattedDate = d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' });
+          } else {
+            formattedDate = item.pubDate;
+          }
+        } catch(e) {
+          formattedDate = item.pubDate;
+        }
+
+        html += `
+          <article class="bg-metalCard border border-metalBorder rounded-xl overflow-hidden flex flex-col card-hover">
+            <div class="h-48 overflow-hidden bg-neutral-950 relative border-b border-metalBorder">
+              <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" onerror="this.src='https://placehold.co/600x400/141418/dc2626?text=Metal+News'">
+              <div class="absolute top-3 left-3">
+                <span class="text-xs font-bold px-2.5 py-1 rounded-md border ${badgeClass} uppercase tracking-wider backdrop-blur-md bg-opacity-90">
+                  ${item.source}
+                </span>
+              </div>
+            </div>
+            
+            <div class="p-5 flex flex-col flex-1">
+              <div class="text-xs text-neutral-400 mb-2 flex items-center gap-1.5 font-medium">
+                <svg class="w-3.5 h-3.5 text-metalRed" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <span>${formattedDate}</span>
+              </div>
+
+              <h2 class="font-cinzel text-lg font-bold text-neutral-100 mb-3 line-clamp-2 hover:text-metalRed transition-colors">
+                <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+              </h2>
+
+              <p class="text-sm text-neutral-400 mb-6 line-clamp-3 flex-1">
+                ${item.snippet}
+              </p>
+
+              <div class="pt-4 border-t border-metalBorder mt-auto">
+                <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-sm font-semibold text-metalRed hover:text-red-400 transition-colors">
+                  <span>Læs mere på kilden</span>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                </a>
+              </div>
+            </div>
+          </article>
+        `;
+      });
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    function openEditModalFromRow(encodedKey) {
+      if (!isAdmin) return;
+      const uniqueKey = decodeURIComponent(encodedKey);
+      const parts = uniqueKey.split('___');
+      const item = library.find(i => (i.artist || '') === parts[0] && (i.title || '') === parts[1]);
+      if (!item) return;
+
+      document.getElementById('album-modal').classList.remove('hidden');
+      document.getElementById('album-modal-title').innerText = 'Rediger Album';
+      document.getElementById('album-artist').value = item.artist || '';
+      document.getElementById('album-title').value = item.title || '';
+      document.getElementById('album-date').value = item.date ? String(item.date).split('T')[0] : '';
+      document.getElementById('album-genre').value = item.genre || '';
+      document.getElementById('album-rating').value = item.rating || 0;
+      document.getElementById('album-cover').value = item.cover || '';
+      document.getElementById('album-spotify').value = item.spotify || '';
+      document.getElementById('album-review').value = item.review || '';
+      updateCoverPreview(item.cover || '');
     }
   </script>
 </body>

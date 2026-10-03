@@ -14,11 +14,10 @@
       --bg-hover: #1c1c22;
       --accent: #e50914;
       --accent-hover: #ff1e27;
-      --accent-glow: rgba(229, 9, 20, 0.4);
+      --accent-glow: rgba(229, 9, 20, 0.5);
       --text-main: #f0f0f2;
       --text-muted: #8a8a9e;
       --border: #262630;
-      --gold: #ffb703;
       --radius: 8px;
     }
 
@@ -60,41 +59,34 @@
       gap: 0.5rem;
       text-transform: uppercase;
     }
+    .logo span { color: var(--accent); text-shadow: 0 0 10px var(--accent-glow); }
 
-    .logo span { color: var(--accent); }
-
-    .nav-tabs {
+    .view-tabs {
       display: flex;
       gap: 0.5rem;
-      background: rgba(0,0,0,0.5);
+      background: #09090b;
       padding: 4px;
       border-radius: var(--radius);
       border: 1px solid var(--border);
     }
-
     .tab-btn {
       background: transparent;
       border: none;
       color: var(--text-muted);
-      padding: 0.6rem 1.2rem;
+      padding: 0.5rem 1rem;
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       cursor: pointer;
-      border-radius: calc(var(--radius) - 2px);
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
+      border-radius: 6px;
+      transition: all 0.2s;
     }
-
-    .tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
     .tab-btn.active {
       background: var(--accent);
       color: #fff;
-      box-shadow: 0 0 15px var(--accent-glow);
     }
+    .tab-btn:hover:not(.active) { color: var(--text-main); background: rgba(255,255,255,0.05); }
 
-    .nav-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .nav-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
 
     .btn-action {
       background: #1e293b;
@@ -146,7 +138,6 @@
       max-height: 90vh;
       overflow-y: auto;
     }
-
     .modal h2 { font-family: 'Cinzel', serif; margin-bottom: 1rem; color: var(--accent); }
 
     .form-group { margin-bottom: 1.2rem; }
@@ -162,17 +153,16 @@
     }
     .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); }
 
-    .btn {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      padding: 0.75rem 1.5rem;
+    .modal-cover-preview {
+      width: 100%;
+      max-height: 320px;
       border-radius: var(--radius);
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
+      object-fit: contain;
+      border: 1px solid var(--border);
+      background: #000;
+      margin-top: 0.8rem;
+      display: block;
     }
-    .btn:hover { background: var(--accent-hover); }
 
     .filter-panel {
       background: var(--bg-card);
@@ -181,17 +171,11 @@
       padding: 1.2rem;
       margin-bottom: 1.5rem;
       display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .filter-row {
-      display: flex;
-      gap: 0.8rem;
-      flex-wrap: wrap;
+      justify-content: space-between;
       align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
     }
-
     .search-input {
       flex: 2;
       min-width: 220px;
@@ -201,27 +185,16 @@
       border-radius: var(--radius);
       color: var(--text-main);
     }
-
     .filter-select {
       flex: 1;
-      min-width: 140px;
-      padding: 0.65rem 0.8rem;
+      min-width: 150px;
+      padding: 0.65rem 1rem;
       background: #09090b;
       border: 1px solid var(--border);
       border-radius: var(--radius);
       color: var(--text-main);
-      font-size: 0.85rem;
+      cursor: pointer;
     }
-
-    .filter-label {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-right: 0.3rem;
-    }
-
     .reset-btn {
       background: transparent;
       border: 1px solid var(--border);
@@ -245,15 +218,13 @@
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
     }
-
     .vault-table th, .vault-table td {
-      padding: 0.8rem 1rem;
+      padding: 1.1rem 1rem;
       border-bottom: 1px solid var(--border);
       vertical-align: middle;
     }
-
     .vault-table th {
       background: #181820;
       color: var(--text-muted);
@@ -261,18 +232,169 @@
       font-size: 0.8rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      user-select: none;
     }
+    
+    .th-content {
+      cursor: pointer;
+      display: inline-block;
+    }
+    .th-content:hover { color: var(--text-main); }
+    .vault-table th span { font-size: 0.7rem; margin-left: 4px; color: var(--accent); }
 
-    .clickable-row { transition: background-color 0.2s; }
+    .clickable-row { transition: background-color 0.2s; cursor: pointer; }
     .clickable-row:hover { background-color: var(--bg-hover); }
 
-    .album-thumb {
-      width: 40px;
-      height: 40px;
-      border-radius: 4px;
-      object-fit: cover;
-      background-color: #222;
+    .row-missing-rating {
+      background-color: rgba(229, 9, 20, 0.12) !important;
+    }
+    .row-missing-rating:hover {
+      background-color: rgba(229, 9, 20, 0.2) !important;
+    }
+
+    .upcoming-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .upcoming-card {
+      background: var(--bg-card);
       border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, border-color 0.2s;
+      cursor: pointer;
+    }
+    .upcoming-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+    }
+    .upcoming-card-header {
+      display: flex;
+      gap: 1rem;
+      padding: 1.2rem;
+      background: #121216;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+    }
+    .upcoming-cover {
+      width: 70px;
+      height: 70px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #000;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .upcoming-meta h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.2rem;
+    }
+    .upcoming-meta .band-name {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .upcoming-card-body {
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      flex-grow: 1;
+      justify-content: space-between;
+    }
+    .countdown-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(229, 9, 20, 0.15);
+      border: 1px solid rgba(229, 9, 20, 0.4);
+      color: #ff6b72;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      width: fit-content;
+    }
+    .countdown-badge.today {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34d399;
+    }
+    .upcoming-details {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+      padding-top: 0.8rem;
+    }
+
+    .metal-rating-container {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      position: relative;
+    }
+    .metal-skull {
+      font-size: 1.1rem;
+      filter: grayscale(100%) brightness(35%);
+      transition: transform 0.2s ease;
+      display: inline-block;
+    }
+    .metal-skull.active {
+      filter: grayscale(0%) brightness(110%);
+      text-shadow: 0 0 8px var(--accent);
+    }
+    .metal-skull.half {
+      background: linear-gradient(90deg, var(--accent) 50%, #444 50%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 5px var(--accent));
+    }
+    .metal-rating-container:hover .metal-skull { transform: scale(1.15); }
+
+    .rating-text-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-left: 8px;
+      font-weight: 600;
+    }
+
+    .rating-popup {
+      display: none;
+      position: absolute;
+      left: 0; bottom: 130%;
+      background: #181820;
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 6px 10px;
+      z-index: 50;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+      white-space: nowrap;
+      align-items: center;
+      gap: 5px;
+    }
+    .metal-rating-container:hover .rating-popup,
+    .rating-popup.active { display: flex; }
+
+    .popup-skull-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      filter: grayscale(100%) brightness(50%);
+      transition: transform 0.1s, filter 0.1s;
+      padding: 2px;
+    }
+    .popup-skull-btn:hover {
+      filter: grayscale(0%) brightness(120%);
+      transform: scale(1.3);
     }
 
     .loading-msg, .error-msg {
@@ -290,38 +412,43 @@
     <div class="nav-container">
       <div class="logo">🤘 Metal <span>Vault</span></div>
       
-      <div class="nav-tabs">
-        <button class="tab-btn active" id="tab-albums" onclick="switchTab('albums')">📁 Album Bibliotek</button>
+      <div class="view-tabs">
+        <button class="tab-btn active" id="tab-vault" onclick="switchView('vault')">🗄️ Hoveddatabase</button>
+        <button class="tab-btn" id="tab-upcoming" onclick="switchView('upcoming')">🚀 Upcoming Releases</button>
       </div>
 
       <div class="nav-actions">
+        <button class="btn-action btn-danger" id="delete-selected-btn" style="display:none;" onclick="deleteSelectedAlbums()">🗑 Slet valgte (<span id="selected-count">0</span>)</button>
         <button class="btn-action btn-primary" onclick="openAddModal()">➕ Tilføj Album</button>
-        <button class="btn-action" onclick="fetchDataFromSheet()">🔄 Synkroniser nu</button>
+        <button class="btn-action" onclick="fetchDataFromSheet(true)">🔄 Synkroniser</button>
       </div>
     </div>
   </header>
 
   <main>
-    <div class="filter-panel">
-      <div class="filter-row">
-        <input type="text" id="search-bar" class="search-input" placeholder="🔍 Søg efter band, album, genre..." oninput="renderApp()">
-        <button class="reset-btn" onclick="resetFilters()">↺ Nulstil filtre</button>
-      </div>
+    <div class="filter-panel" id="filter-panel-container">
+      <input type="text" id="search-bar" class="search-input" placeholder="🔍 Søg efter band, album, anmeldelse..." oninput="renderApp()">
+      <select id="genre-filter" class="filter-select" onchange="renderApp()">
+        <option value="">Alle genrer</option>
+      </select>
+      <select id="year-filter" class="filter-select" onchange="renderApp()">
+        <option value="">Alle årstal</option>
+      </select>
+      <button class="reset-btn" onclick="resetFilters()">↺ Nulstil</button>
     </div>
 
     <div id="content-container">
-      <div class="loading-msg">Henter data fra Google Sheets...</div>
+      <div class="loading-msg">Indlæser Metal Vault...</div>
     </div>
   </main>
 
-  <!-- MODAL: ALBUM -->
   <div class="modal-overlay" id="album-modal" onclick="closeModal('album-modal')">
     <div class="modal" onclick="event.stopPropagation()">
       <h2 id="album-modal-title">Tilføj Album</h2>
       <input type="hidden" id="album-edit-id">
 
       <div class="form-group">
-        <label>Band</label>
+        <label>Band / Artist</label>
         <input type="text" id="album-artist" placeholder="f.eks. Judas Priest">
       </div>
       <div class="form-group">
@@ -347,137 +474,473 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Kommentar</label>
-        <textarea id="album-review" rows="3" placeholder="Skriv dine tanker her..."></textarea>
+        <label>Album Cover</label>
+        <input type="url" id="album-cover" placeholder="https://..." oninput="updateCoverPreview(this.value)">
+        <img id="modal-cover-preview" class="modal-cover-preview" src="" alt="Cover Forhåndsvisning" onerror="this.style.display='none'">
+      </div>
+      <div class="form-group">
+        <label>Spotify Link</label>
+        <input type="url" id="album-spotify" placeholder="https://open.spotify.com/album/...">
+      </div>
+      <div class="form-group">
+        <label>Kommentar / Anmeldelse</label>
+        <textarea id="album-review" rows="3" placeholder="Tanker..."></textarea>
       </div>
 
-      <button class="btn" onclick="saveAlbum()">💾 Gem Album</button>
-      <button class="btn" style="background:#333; margin-left:0.5rem;" onclick="closeModal('album-modal')">Luk</button>
+      <button class="btn-action btn-primary" style="width:100%; justify-content:center; padding: 0.75rem;" onclick="saveAlbum()">💾 Gem Ændringer</button>
     </div>
   </div>
 
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwOLCvyvOxPTYkbO922s4FF640UrYGYssSwzicRd-iYE5NiQJycmAzQaP0S_MPjGprS/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyeCVcVM7W7nrXKePgb3FZe2DynG0hUE6yc6eMigxUNXu4FPqHS0wLb0RdgodbhVnA/exec';
 
     let library = [];
+    let currentSort = { column: 'artist', asc: true };
+    let currentView = 'vault';
 
     window.addEventListener('DOMContentLoaded', () => {
-      fetchDataFromSheet();
+      const cached = localStorage.getItem('metal_vault_cache');
+      if (cached) {
+        try {
+          library = JSON.parse(cached);
+          populateFilterDropdowns();
+          renderApp();
+        } catch(e) {}
+      }
+      fetchDataFromSheet(library.length === 0);
     });
 
-    function fetchDataFromSheet() {
+    function switchView(view) {
+      currentView = view;
+      document.getElementById('tab-vault').classList.toggle('active', view === 'vault');
+      document.getElementById('tab-upcoming').classList.toggle('active', view === 'upcoming');
+      
+      const filterPanel = document.getElementById('filter-panel-container');
+      if (filterPanel) filterPanel.style.display = (view === 'vault') ? 'flex' : 'none';
+      
+      if (view === 'upcoming') {
+        const deleteBtn = document.getElementById('delete-selected-btn');
+        if (deleteBtn) deleteBtn.style.display = 'none';
+      }
+
+      renderApp();
+    }
+
+    function fetchDataFromSheet(showLoadingMsg) {
       const container = document.getElementById('content-container');
-      container.innerHTML = `<div class="loading-msg">Henter data fra Google Sheets...</div>`;
+      if (showLoadingMsg && library.length === 0 && container) {
+        container.innerHTML = '<div class="loading-msg">Henter data fra Google Sheets...</div>';
+      }
 
-      // Tilføj et tilfældigt 'cache-buster' parameter for at undgå at browseren gemmer gamle svar
-      const url = SCRIPT_URL + '?t=' + new Date().getTime();
-
-      fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error('Netværksfejl ved hentning af data');
-          return res.json();
-        })
+      fetch(SCRIPT_URL + '?t=' + new Date().getTime())
+        .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {
             library = data;
+            localStorage.setItem('metal_vault_cache', JSON.stringify(library));
+            populateFilterDropdowns();
             renderApp();
           } else {
-            container.innerHTML = `<div class="error-msg">Modtog ikke gyldig data fra Google Sheets (forkert format).</div>`;
+            if (library.length === 0 && container) {
+              container.innerHTML = '<div class="error-msg">Ugyldig data modtaget fra serveren.</div>';
+            }
           }
         })
         .catch(err => {
-          console.error('Fejl:', err);
-          container.innerHTML = `<div class="error-msg">Kunne ikke hente data. Tjek at dit Apps Script er udrullet korrekt med adgang for "Alle".<br><small>${err.message}</small></div>`;
+          console.error('Fejl ved hentning:', err);
+          if (library.length === 0 && container) {
+            container.innerHTML = '<div class="error-msg">Kunne ikke hente data.<br><br><button class="btn-action btn-primary" onclick="fetchDataFromSheet(true)">Prøv igen</button></div>';
+          }
         });
     }
 
-    function sendToSheet(action, itemData) {
-      const payload = { action: action, item: itemData };
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).then(() => {
-        setTimeout(fetchDataFromSheet, 1200); // Genindlæs data efter et øjeblik
-      }).catch(err => console.error('Synkroniseringsfejl:', err));
+    function sendToSheet(paramsObj) {
+      const queryParams = new URLSearchParams(paramsObj);
+      queryParams.append('t', new Date().getTime());
+      const url = SCRIPT_URL + '?' + queryParams.toString();
+
+      fetch(url, { method: 'GET', mode: 'no-cors' })
+        .then(() => {
+          setTimeout(() => {
+            localStorage.removeItem('metal_vault_cache');
+            fetchDataFromSheet(false);
+          }, 1500);
+        })
+        .catch(err => console.error('Synkroniseringsfejl:', err));
+    }
+
+    function populateFilterDropdowns() {
+      const genreSelect = document.getElementById('genre-filter');
+      const yearSelect = document.getElementById('year-filter');
+      if (!genreSelect || !yearSelect) return;
+      
+      const currentGenre = genreSelect.value;
+      const currentYear = yearSelect.value;
+
+      const genres = [...new Set(library.map(i => String(i.genre || '').trim()).filter(Boolean))].sort();
+      const years = [...new Set(library.map(i => {
+        if (!i.date) return '';
+        const clean = String(i.date).split('T')[0];
+        const parts = clean.split('-');
+        return parts.length === 3 ? parts[0] : '';
+      }).filter(Boolean))].sort((a, b) => b - a);
+
+      genreSelect.innerHTML = '<option value="">Alle genrer</option>' + genres.map(g => '<option value="' + g + '">' + g + '</option>').join('');
+      yearSelect.innerHTML = '<option value="">Alle årstal</option>' + years.map(y => '<option value="' + y + '">' + y + '</option>').join('');
+
+      genreSelect.value = currentGenre;
+      yearSelect.value = currentYear;
+    }
+
+    function updateCoverPreview(url) {
+      const preview = document.getElementById('modal-cover-preview');
+      if (!preview) return;
+      if (url && url.trim() !== '') {
+        preview.src = url;
+        preview.style.display = 'block';
+      } else {
+        preview.style.display = 'none';
+      }
     }
 
     function openAddModal() {
       document.getElementById('album-modal').classList.add('active');
-      document.getElementById('album-modal-title').innerText = 'Tilføj Album';
+      document.getElementById('album-modal-title').innerText = 'Tilføj Nyt Album';
       document.getElementById('album-edit-id').value = '';
       document.getElementById('album-artist').value = '';
       document.getElementById('album-title').value = '';
       document.getElementById('album-date').value = '';
       document.getElementById('album-genre').value = '';
       document.getElementById('album-rating').value = 0;
+      document.getElementById('album-cover').value = '';
+      document.getElementById('album-spotify').value = '';
       document.getElementById('album-review').value = '';
+      updateCoverPreview('');
     }
 
-    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function openEditModal(id) {
+      const item = library.find(i => String(i.id) === String(id));
+      if (!item) return;
 
-    function resetFilters() {
-      document.getElementById('search-bar').value = '';
-      renderApp();
+      document.getElementById('album-modal').classList.add('active');
+      document.getElementById('album-modal-title').innerText = 'Rediger Album';
+      document.getElementById('album-edit-id').value = item.id;
+      document.getElementById('album-artist').value = item.artist || '';
+      document.getElementById('album-title').value = item.title || '';
+      document.getElementById('album-date').value = item.date ? String(item.date).split('T')[0] : '';
+      document.getElementById('album-genre').value = item.genre || '';
+      document.getElementById('album-rating').value = item.rating || 0;
+      document.getElementById('album-cover').value = item.cover || '';
+      document.getElementById('album-spotify').value = item.spotify || '';
+      document.getElementById('album-review').value = item.review || '';
+      updateCoverPreview(item.cover || '');
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.remove('active');
     }
 
     function saveAlbum() {
-      const idInput = document.getElementById('album-edit-id').value;
       const itemData = {
-        id: idInput ? parseInt(idInput) : Date.now(),
         artist: document.getElementById('album-artist').value,
         title: document.getElementById('album-title').value,
         date: document.getElementById('album-date').value,
         genre: document.getElementById('album-genre').value,
         rating: parseInt(document.getElementById('album-rating').value) || 0,
+        cover: document.getElementById('album-cover').value,
+        spotify: document.getElementById('album-spotify').value,
         review: document.getElementById('album-review').value
       };
+      
+      const idx = library.findIndex(i => (i.artist||'').trim().toLowerCase() === itemData.artist.trim().toLowerCase() && (i.title||'').trim().toLowerCase() === itemData.title.trim().toLowerCase());
+      if (idx !== -1) {
+        library[idx] = Object.assign({}, library[idx], itemData);
+      } else {
+        library.push(itemData);
+      }
+      localStorage.setItem('metal_vault_cache', JSON.stringify(library));
+      populateFilterDropdowns();
+      renderApp();
 
-      const action = idInput ? 'update' : 'add';
-      sendToSheet(action, itemData);
+      sendToSheet(Object.assign({ action: 'save' }, itemData));
       closeModal('album-modal');
+    }
+
+    function updateRatingDirect(id, newRating, event) {
+      if (event) event.stopPropagation();
+      const item = library.find(i => String(i.id) === String(id));
+      if (!item) return;
+      
+      item.rating = parseInt(newRating) || 0;
+      localStorage.setItem('metal_vault_cache', JSON.stringify(library));
+      renderApp();
+      
+      sendToSheet({
+        action: 'updaterating',
+        artist: item.artist || '',
+        title: item.title || '',
+        rating: item.rating
+      });
+    }
+
+    function resetFilters() {
+      const searchBar = document.getElementById('search-bar');
+      const genreFilter = document.getElementById('genre-filter');
+      const yearFilter = document.getElementById('year-filter');
+      if (searchBar) searchBar.value = '';
+      if (genreFilter) genreFilter.value = '';
+      if (yearFilter) yearFilter.value = '';
+      renderApp();
+    }
+
+    function sortTable(column) {
+      if (currentSort.column === column) {
+        currentSort.asc = !currentSort.asc;
+      } else {
+        currentSort.column = column;
+        currentSort.asc = true;
+      }
+      renderApp();
+    }
+
+    function toggleSelectAll(master) {
+      const checkboxes = document.querySelectorAll('.row-checkbox');
+      checkboxes.forEach(cb => cb.checked = master.checked);
+      updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+      if (currentView !== 'vault') return;
+      const checked = document.querySelectorAll('.row-checkbox:checked');
+      const countSpan = document.getElementById('selected-count');
+      const deleteBtn = document.getElementById('delete-selected-btn');
+      if (countSpan && deleteBtn) {
+        countSpan.innerText = checked.length;
+        deleteBtn.style.display = checked.length > 0 ? 'inline-flex' : 'none';
+      }
+    }
+
+    function deleteSelectedAlbums() {
+      const checked = document.querySelectorAll('.row-checkbox:checked');
+      if (checked.length === 0) return;
+
+      if (!confirm('Er du sikker på, at du vil slette ' + checked.length + ' album(s)?')) return;
+
+      const idsToDelete = Array.from(checked).map(cb => {
+        const id = cb.value;
+        const item = library.find(i => String(i.id) === String(id));
+        if (item) {
+          const artist = (item.artist || '').trim().toLowerCase();
+          const title = (item.title || '').trim().toLowerCase();
+          return artist + "___" + title;
+        }
+        return "";
+      }).filter(Boolean);
+      
+      library = library.filter((i, idx) => !Array.from(checked).some(cb => String(cb.value) === String(i.id || "row_" + (idx+1))));
+      localStorage.setItem('metal_vault_cache', JSON.stringify(library));
+      populateFilterDropdowns();
+      renderApp();
+
+      sendToSheet({
+        action: 'delete',
+        ids: idsToDelete.join(',')
+      });
+    }
+
+    function formatDateDK(dateString) {
+      if (!dateString) return '';
+      const clean = String(dateString).split('T')[0];
+      const parts = clean.split('-');
+      if (parts.length !== 3) return dateString;
+      return parts[2] + '-' + parts[1] + '-' + parts[0];
+    }
+
+    function getDaysUntil(dateString) {
+      if (!dateString) return null;
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const target = new Date(String(dateString).split('T')[0]);
+      target.setHours(0,0,0,0);
+      const diffTime = target - today;
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    function renderSkulls(rating, rowId) {
+      const r = parseInt(rating) || 0;
+      let html = '<div class="metal-rating-container" title="' + r + '/10 karakter">';
+      
+      for (let i = 1; i <= 5; i++) {
+        const skullVal = i * 2;
+        if (r >= skullVal) {
+          html += '<span class="metal-skull active">💀</span>';
+        } else if (r === skullVal - 1) {
+          html += '<span class="metal-skull half">💀</span>';
+        } else {
+          html += '<span class="metal-skull">💀</span>';
+        }
+      }
+
+      if (r > 0) {
+        html += '<span class="rating-text-label">' + r + '/10</span>';
+      } else {
+        html += '<span class="rating-text-label" style="opacity:0.4;">-</span>';
+      }
+
+      html += '<div class="rating-popup" onclick="event.stopPropagation()">';
+      for (let score = 1; score <= 10; score++) {
+        html += '<button class="popup-skull-btn" onclick="updateRatingDirect(\'' + rowId + '\', ' + score + ', event)" title="' + score + '/10">💀</button>';
+      }
+      html += '</div></div>';
+
+      return html;
+    }
+
+    function renderUpcomingView(container) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      const upcoming = library.filter(item => {
+        if (!item.date) return false;
+        const target = new Date(String(item.date).split('T')[0]);
+        target.setHours(0,0,0,0);
+        return target >= today;
+      }).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      if (upcoming.length === 0) {
+        container.innerHTML = '<div class="loading-msg">Ingen upcoming releases fundet i databasen.</div>';
+        return;
+      }
+
+      container.innerHTML = '<div class="upcoming-grid">' + upcoming.map((item, idx) => {
+        const days = getDaysUntil(item.date);
+        const formattedDate = formatDateDK(item.date);
+        const rowId = item.id || ("row_" + (idx+1));
+        
+        let badgeHtml = '';
+        if (days === 0) {
+          badgeHtml = '<div class="countdown-badge today">🔥 Udkommer I DAG!</div>';
+        } else if (days === 1) {
+          badgeHtml = '<div class="countdown-badge">⏳ Udkommer i morgen</div>';
+        } else if (days > 1) {
+          badgeHtml = '<div class="countdown-badge">⏳ Om ' + days + ' dage</div>';
+        }
+
+        return '<div class="upcoming-card" onclick="openEditModal(\'' + rowId + '\')">' +
+          '<div class="upcoming-card-header">' +
+            (item.cover ? '<img src="' + item.cover + '" class="upcoming-cover" onerror="this.style.display=\'none\'">' : '<div class="upcoming-cover" style="display:flex;align-items:center;justify-content:center;">🎸</div>') +
+            '<div class="upcoming-meta">' +
+              '<div class="band-name">' + (item.artist || 'Ukendt Band') + '</div>' +
+              '<h3>' + (item.title || 'Udgivelse') + '</h3>' +
+            '</div>' +
+          '</div>' +
+          '<div class="upcoming-card-body">' +
+            '<div>' + badgeHtml + '</div>' +
+            '<div class="upcoming-details">' +
+              '<span>📅 ' + formattedDate + '</span>' +
+              '<span>' + (item.genre || 'Metal') + '</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('') + '</div>';
     }
 
     function renderApp() {
       const container = document.getElementById('content-container');
-      const searchTerm = document.getElementById('search-bar')?.value.toLowerCase() || '';
+      if (!container) return;
 
-      let filtered = library.filter(item => {
-        return Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm));
-      });
-
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="loading-msg">Ingen albums fundet eller arket er tomt.</div>`;
+      if (currentView === 'upcoming') {
+        renderUpcomingView(container);
         return;
       }
 
-      container.innerHTML = `
-        <div class="table-container">
-          <table class="vault-table">
-            <thead>
-              <tr>
-                <th style="width: 60px;">Cover</th>
-                <th>Band</th>
-                <th>Albumtitel</th>
-                <th>Dato</th>
-                <th>Genre</th>
-                <th style="width: 100px;">Karakter</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filtered.map(item => `
-                <tr class="clickable-row">
-                  <td><img src="https://picsum.photos/seed/${encodeURIComponent((item.artist||'')+(item.title||''))}/40/40" class="album-thumb"></td>
-                  <td>${item.artist || ''}</td>
-                  <td style="font-weight:600;">${item.title || ''}</td>
-                  <td>${item.date || ''}</td>
-                  <td>${item.genre || ''}</td>
-                  <td>⭐ ${item.rating || 0}/10</td>
-                </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>`;
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      const searchTerm = document.getElementById('search-bar')?.value.toLowerCase() || '';
+      const selectedGenre = document.getElementById('genre-filter')?.value || '';
+      const selectedYear = document.getElementById('year-filter')?.value || '';
+
+      // Filtrer så kun udgivelser der IKKE er i fremtiden (eller ikke har dato) vises i hoveddatabasen
+      let filtered = library.filter(item => {
+        if (item.date) {
+          const target = new Date(String(item.date).split('T')[0]);
+          target.setHours(0,0,0,0);
+          if (target > today) return false; // Skjuler fremtidige udgivelser her
+        }
+
+        const matchesSearch = Object.values(item).some(val => String(val).toLowerCase().includes(searchTerm));
+        const matchesGenre = !selectedGenre || String(item.genre || '').trim().toLowerCase() === selectedGenre.toLowerCase();
+        
+        let matchesYear = true;
+        if (selectedYear) {
+          const itemYear = item.date ? String(item.date).split('T')[0].split('-')[0] : '';
+          matchesYear = itemYear === selectedYear;
+        }
+
+        return matchesSearch && matchesGenre && matchesYear;
+      });
+
+      filtered.sort((a, b) => {
+        let valA = a[currentSort.column] || '';
+        let valB = b[currentSort.column] || '';
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+
+        if (valA < valB) return currentSort.asc ? -1 : 1;
+        if (valA > valB) return currentSort.asc ? 1 : -1;
+        return 0;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="loading-msg">Ingen albums fundet i databasen.</div>';
+        updateSelectedCount();
+        return;
+      }
+
+      const getArrow = (col) => currentSort.column === col ? (currentSort.asc ? '▲' : '▼') : '';
+
+      container.innerHTML = '<div class="table-container">' +
+        '<table class="vault-table" id="main-vault-table">' +
+          '<thead>' +
+            '<tr>' +
+              '<th style="width: 45px;"><input type="checkbox" onclick="toggleSelectAll(this)"></th>' +
+              '<th><div class="th-content" onclick="sortTable(\'artist\')">Band <span>' + getArrow('artist') + '</span></div></th>' +
+              '<th><div class="th-content" onclick="sortTable(\'title\')">Albumtitel <span>' + getArrow('title') + '</span></div></th>' +
+              '<th style="width: 150px;"><div class="th-content" onclick="sortTable(\'date\')">Udgivelsesdato <span>' + getArrow('date') + '</span></div></th>' +
+              '<th style="width: 170px;"><div class="th-content" onclick="sortTable(\'genre\')">Genre <span>' + getArrow('genre') + '</span></div></th>' +
+              '<th style="width: 190px;"><div class="th-content" onclick="sortTable(\'rating\')">Karakter <span>' + getArrow('rating') + '</span></div></th>' +
+            '</tr>' +
+          '</thead>' +
+          '<tbody>' +
+            filtered.map((item, idx) => {
+              const formattedDate = formatDateDK(item.date);
+              const missingRating = (!item.rating || item.rating === 0);
+              const rowClass = missingRating ? 'clickable-row row-missing-rating' : 'clickable-row';
+              const rowId = item.id || ("row_" + (idx+1));
+              const skullRatingHtml = renderSkulls(item.rating || 0, rowId);
+
+              return '<tr class="' + rowClass + '" onclick="openEditModal(\'' + rowId + '\')">' +
+                '<td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" value="' + rowId + '" onchange="updateSelectedCount()"></td>' +
+                '<td>' + (item.artist || '') + '</td>' +
+                '<td style="font-weight:600;">' +
+                  '<div style="display: flex; align-items: center; gap: 10px;">' +
+                    (item.cover ? '<img src="' + item.cover + '" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0;" onerror="this.style.display=\'none\'">' : '') +
+                    '<span>' + (item.title || '') + '</span>' +
+                    (item.spotify ? '<a href="' + item.spotify + '" target="_blank" onclick="event.stopPropagation()" title="Åbn i Spotify" style="color: #1DB954; font-size: 1.2rem; text-decoration: none; margin-left: auto; flex-shrink: 0;">🟢</a>' : '') +
+                  '</div>' +
+                '</td>' +
+                '<td>' + formattedDate + '</td>' +
+                '<td>' + (item.genre || '') + '</td>' +
+                '<td onclick="event.stopPropagation()">' + skullRatingHtml + '</td>' +
+              '</tr>';
+            }).join('') +
+          '</tbody>' +
+        '</table>' +
+      '</div>';
+      
+      updateSelectedCount();
     }
   </script>
 </body>

@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Metal Vault - Album & Band Database</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0a0a0c;
+      --bg-card: #141418;
+      --bg-hover: #1c1c22;
+      --accent: #e50914;
+      --accent-hover: #ff1e27;
+      --accent-glow: rgba(229, 9, 20, 0.4);
+      --text-main: #f0f0f2;
+      --text-muted: #8a8a9e;
+      --border: #262630;
+      --gold: #ffb703;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 50px;
+    }
+
+    header {
+      background: linear-gradient(180deg, rgba(20,20,24,0.95) 0%, rgba(10,10,12,0.95) 100%);
+      border-bottom: 2px solid var(--accent);
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo {
+      font-family: 'Cinzel', serif;
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--text-main);
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-transform: uppercase;
+    }
+
+    .logo span { color: var(--accent); }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: rgba(0,0,0,0.5);
+      padding: 4px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.6rem 1.2rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-radius: calc(var(--radius) - 2px);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    .nav-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    .btn-action {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #38bdf8;
+      padding: 0.6rem 1rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-action:hover { background: #334155; border-color: #38bdf8; }
+
+    .btn-danger {
+      background: #450a0a;
+      border: 1px solid #7f1d1d;
+      color: #f87171;
+    }
+    .btn-danger:hover { background: #7f1d1d; color: #fff; }
+
+    .btn-primary {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+    main { max-width: 1400px; margin: 2rem auto; padding: 0 1.5rem; }
+
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      display: none; justify-content: center; align-items: center; z-index: 1000;
+      backdrop-filter: blur(5px);
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 90%; max-width: 550px;
+      padding: 2rem;
+      position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal h2 { font-family: 'Cinzel', serif; margin-bottom: 1rem; color: var(--accent); }
+
+    /* Stort albumcover i modal */
+    .modal-cover-container {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .modal-cover {
+      width: 160px;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid var(--border);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; }
+    .form-group textarea, .form-group input, .form-group select {
+      width: 100%;
+      padding: 0.75rem;
+      background: #09090b;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-main);
+      font-family: inherit;
+    }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); }
+
+    .btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: var(--accent-hover); }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+      text-align: center;
+    }
+    .stat-number { font-size: 2rem; font-weight: 700; color: var(--accent); margin-top: 0.3rem; }
+
+    .filter-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 2;
+      min-width: 220px;
+      padding: 0.65rem 1rem;
+      background: #09090b;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-main);
+    }
+
+    .filter-select {
+      flex: 1;
+      min-width: 140px;
+      padding: 0.65rem 0.8rem;
+      background: #09090b;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-main);
+      font-size: 0.85rem;
+    }
+
+    .filter-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-right: 0.3rem;
+    }
+
+    .reset-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.65rem 1rem;
+      font-size: 0.85rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+    }
+    .reset-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .vault-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+      table-layout: fixed;
+    }
+
+    .vault-table th, .vault-table td {
+      padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .vault-table th {
+      background: #181820;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+      user-select: none;
+    }
+
+    .resizer {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      background: rgba(255,255,255,0.05);
+      cursor: col-resize;
+      z-index: 10;
+    }
+    .resizer:hover, .resizing {
+      background: var(--accent);
+    }
+
+    .vault-table th.sortable { cursor: pointer; }
+    .vault-table th.sortable:hover { background: #23232e; color: var(--text-main); }
+    .vault-table th.sort-active { color: var(--accent); }
+    
+    .clickable-row {
+      transition: background-color 0.2s;
+    }
+    .clickable-row:hover { background-color: var(--bg-hover); }
+
+    .row-unrated {
+      border-left: 4px solid var(--accent);
+      background-color: rgba(229, 9, 20, 0.04);
+    }
+
+    .album-thumb {
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      object-fit: cover;
+      background-color: #222;
+      display: block;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .album-thumb:hover {
+      transform: scale(1.05);
+      border-color: var(--accent);
+    }
+
+    .inline-input {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.5rem;
+      border-radius: 4px;
+      width: 100%;
+      text-overflow: ellipsis;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .inline-input:hover {
+      background: #09090b;
+      border-color: #333;
+    }
+
+    .inline-input:focus {
+      background: #09090b;
+      border-color: var(--accent);
+      outline: none;
+      white-space: normal;
+    }
+
+    .inline-select-rating {
+      background: #09090b;
+      border: 1px solid var(--border);
+      color: var(--gold);
+      font-weight: 700;
+      padding: 0.3rem 0.4rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .checkbox-col {
+      width: 45px !important;
+      text-align: center;
+    }
+
+    .checkbox-col input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="nav-container">
+      <div class="logo">🤘 Metal <span>Vault</span></div>
+      
+      <div class="nav-tabs">
+        <button class="tab-btn active" id="tab-albums" onclick="switchTab('albums')"> Album Bibliotek</button>
+        <button class="tab-btn" id="tab-bands" onclick="switchTab('bands')"> Band Database</button>
+      </div>
+
+      <div class="nav-actions">
+        <button class="btn-action btn-primary" id="add-btn" onclick="openAddModal()">➕ Tilføj Album</button>
+        <button class="btn-action" onclick="openImportModal()">📥 Importer data</button>
+        <button class="btn-action" onclick="exportData()">💾 Eksportér databaser</button>
+        <button class="btn-action btn-danger" id="delete-selected-btn" style="display: none;" onclick="deleteSelected()">🗑️ Slet valgte (0)</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="stats-bar" id="stats-container"></div>
+
+    <div class="filter-panel">
+      <div class="filter-row">
+        <input type="text" id="search-bar" class="search-input" placeholder="🔍 Søg frit efter band, albumtitel, genre eller kommentar..." oninput="debounceSearch()">
+        <button class="reset-btn" onclick="resetFilters()">↺ Nulstil filtre</button>
+      </div>
+
+      <div class="filter-row" id="filter-controls-row"></div>
+    </div>
+
+    <div id="content-container"></div>
+  </main>
+
+  <!-- MODAL: ALBUM -->
+  <div class="modal-overlay" id="album-modal" onclick="closeAndSaveModal('album')">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h2 id="album-modal-title">Tilføj Album</h2>
+      <input type="hidden" id="album-edit-id">
+
+      <div class="modal-cover-container" id="modal-cover-box" style="display:none;">
+        <img id="modal-cover-img" src="" class="modal-cover" alt="Album Cover">
+      </div>
+
+      <div class="form-group">
+        <label>Band</label>
+        <input type="text" id="album-artist" placeholder="f.eks. Judas Priest">
+      </div>
+
+      <div class="form-group">
+        <label>Albumtitel</label>
+        <input type="text" id="album-title" placeholder="f.eks. Invincible Shield">
+      </div>
+
+      <div class="form-group">
+        <label>Udgivelsesdato</label>
+        <input type="date" id="album-date">
+      </div>
+
+      <div class="form-group">
+        <label>Genre</label>
+        <input type="text" id="album-genre" placeholder="f.eks. Heavy Metal">
+      </div>
+
+      <div class="form-group">
+        <label>Karakter (1 - 10)</label>
+        <select id="album-rating">
+          <option value="0">Ingen karakter endnu</option>
+          <option value="1">1 / 10</option>
+          <option value="2">2 / 10</option>
+          <option value="3">3 / 10</option>
+          <option value="4">4 / 10</option>
+          <option value="5">5 / 10</option>
+          <option value="6">6 / 10</option>
+          <option value="7">7 / 10</option>
+          <option value="8">8 / 10</option>
+          <option value="9">9 / 10</option>
+          <option value="10">10 / 10 - Mesterværk</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Kommentar</label>
+        <textarea id="album-review" rows="3" placeholder="Skriv dine tanker om albummet her..."></textarea>
+      </div>
+
+      <button class="btn" onclick="saveAlbum()"> Gem Album</button>
+      <button class="btn" style="background:#333; margin-left:0.5rem;" onclick="closeModal('album-modal')">Luk</button>
+    </div>
+  </div>
+
+  <!-- MODAL: BAND -->
+  <div class="modal-overlay" id="band-modal" onclick="closeAndSaveModal('band')">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h2 id="band-modal-title">Tilføj Band</h2>
+      <input type="hidden" id="band-edit-id">
+
+      <div class="form-group">
+        <label>Band Navn</label>
+        <input type="text" id="band-name" placeholder="f.eks. Iron Maiden">
+      </div>
+
+      <div class="form-group">
+        <label>Oprindelsesland</label>
+        <input type="text" id="band-country" placeholder="f.eks. England">
+      </div>
+
+      <div class="form-group">
+        <label>Genrer</label>
+        <input type="text" id="band-genre" placeholder="f.eks. Heavy Metal, NWOBHM">
+      </div>
+
+      <div class="form-group">
+        <label>Karakter (1 - 10)</label>
+        <select id="band-rating">
+          <option value="0">Ingen karakter</option>
+          <option value="1">1 / 10</option>
+          <option value="2">2 / 10</option>
+          <option value="3">3 / 10</option>
+          <option value="4">4 / 10</option>
+          <option value="5">5 / 10</option>
+          <option value="6">6 / 10</option>
+          <option value="7">7 / 10</option>
+          <option value="8">8 / 10</option>
+          <option value="9">9 / 10</option>
+          <option value="10">10 / 10 - Legendarisk</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Beskrivelse / Noter</label>
+        <textarea id="band-notes" rows="3" placeholder="Noter om bandet, medlemmer osv..."></textarea>
+      </div>
+
+      <button class="btn" onclick="saveBand()"> Gem Band</button>
+      <button class="btn" style="background:#333; margin-left:0.5rem;" onclick="closeModal('band-modal')">Luk</button>
+    </div>
+  </div>
+
+  <!-- MODAL: IMPORTER DATA -->
+  <div class="modal-overlay" id="import-modal" onclick="closeModal('import-modal')">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h2>Importer Data</h2>
+      
+      <div class="form-group">
+        <label>Kopier & Indsæt direkte fra Sheets</label>
+        <textarea id="paste-input" rows="4" placeholder="Markér felter i dit Google Sheet, kopier (Ctrl+C) og indsæt her..."></textarea>
+        <button class="btn" style="margin-top: 0.5rem;" onclick="importPastedData()">Indsæt Data</button>
+      </div>
+
+      <hr style="border-color: var(--border); margin: 1.5rem 0;">
+
+      <div class="form-group">
+        <label>Eller upload en backup-fil (.json)</label>
+        <input type="file" id="backup-file-input" accept=".json" onchange="importBackupFile(event)" style="background:transparent; border:none; padding:0;">
+      </div>
+
+      <button class="btn" style="background:#333; margin-top: 1rem;" onclick="closeModal('import-modal')">Luk</button>
+    </div>
+  </div>
+
+  <script>
+    let library = JSON.parse(localStorage.getItem('metal_library')) || [];
+
+    let bands = JSON.parse(localStorage.getItem('metal_bands')) || [
+      { id: 1, name: 'Iron Maiden', country: 'England', genre: 'Heavy Metal', rating: 10, notes: 'Pionerer inden for NWOBHM.' },
+      { id: 2, name: 'Slayer', country: 'USA', genre: 'Thrash Metal', rating: 9, notes: 'En af de 4 store thrash-bands.' },
+      { id: 3, name: 'Mercyful Fate', country: 'Danmark', genre: 'Heavy Metal', rating: 10, notes: 'Dansk kult-band med King Diamond.' }
+    ];
+
+    let activeTab = 'albums';
+    let selectedIds = new Set();
+    let searchTimeout = null;
+
+    let albumFilters = { sort: 'artist-asc', genre: 'all', year: 'all', minRating: '0' };
+    let bandFilters = { sort: 'name-asc', genre: 'all', country: 'all', minRating: '0' };
+
+    function debounceSearch() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        renderApp();
+      }, 150);
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      selectedIds.clear();
+      updateDeleteSelectedBtn();
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.getElementById('add-btn').innerText = tab === 'albums' ? '➕ Tilføj Album' : '➕ Tilføj Band';
+      renderFilterControls();
+      renderApp();
+    }
+
+    function openAddModal() {
+      if (activeTab === 'albums') openAlbumModal();
+      else openBandModal();
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    function closeAndSaveModal(type) {
+      if (type === 'album') saveAlbum(true);
+      else if (type === 'band') saveBand(true);
+    }
+
+    function openImportModal() { document.getElementById('import-modal').classList.add('active'); }
+
+    // --- EKSPORT AF BEGGE DATABASER ---
+    function exportData() {
+      const backup = {
+        library: library,
+        bands: bands,
+        exportDate: new Date().toISOString()
+      };
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "metal_vault_backup.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    // --- IMPORT AF BACKUP FIL (.JSON) ---
+    function importBackupFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.library) {
+            library = data.library;
+            localStorage.setItem('metal_library', JSON.stringify(library));
+          }
+          if (data.bands) {
+            bands = data.bands;
+            localStorage.setItem('metal_bands', JSON.stringify(bands));
+          }
+          alert('Backup gendannet succesfuldt!');
+          closeModal('import-modal');
+          renderFilterControls();
+          renderApp();
+        } catch (err) {
+          alert('Fejl ved læsning af filen: ' + err);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetFilters() {
+      document.getElementById('search-bar').value = '';
+      albumFilters = { sort: 'artist-asc', genre: 'all', year: 'all', minRating: '0' };
+      bandFilters = { sort: 'name-asc', genre: 'all', country: 'all', minRating: '0' };
+      renderFilterControls();
+      renderApp();
+    }
+
+    function toggleSelectAll(masterCheckbox) {
+      const checkboxes = document.querySelectorAll('.item-checkbox');
+      selectedIds.clear();
+      checkboxes.forEach(cb => {
+        cb.checked = masterCheckbox.checked;
+        if (masterCheckbox.checked) {
+          selectedIds.add(parseInt(cb.dataset.id));
+        }
+      });
+      updateDeleteSelectedBtn();
+    }
+
+    function toggleSelectRow(id, checkbox) {
+      if (checkbox.checked) {
+        selectedIds.add(id);
+      } else {
+        selectedIds.delete(id);
+      }
+      updateDeleteSelectedBtn();
+    }
+
+    function updateDeleteSelectedBtn() {
+      const btn = document.getElementById('delete-selected-btn');
+      if (selectedIds.size > 0) {
+        btn.style.display = 'inline-flex';
+        btn.innerText = `🗑️ Slet valgte (${selectedIds.size})`;
+      } else {
+        btn.style.display = 'none';
+      }
+    }
+
+    function deleteSelected() {
+      if (selectedIds.size === 0) return;
+      
+      const typeText = activeTab === 'albums' ? 'albums' : 'bands';
+      if (confirm(`Er du sikker på, at du vil slette ${selectedIds.size} ${typeText}?`)) {
+        if (activeTab === 'albums') {
+          library = library.filter(item => !selectedIds.has(item.id));
+          localStorage.setItem('metal_library', JSON.stringify(library));
+        } else {
+          bands = bands.filter(item => !selectedIds.has(item.id));
+          localStorage.setItem('metal_bands', JSON.stringify(bands));
+        }
+        selectedIds.clear();
+        updateDeleteSelectedBtn();
+        renderFilterControls();
+        renderApp();
+      }
+    }
+
+    function sortByColumn(col) {
+      if (activeTab === 'albums') {
+        const currentSort = albumFilters.sort;
+        if (col === 'artist') albumFilters.sort = currentSort === 'artist-asc' ? 'artist-desc' : 'artist-asc';
+        else if (col === 'title') albumFilters.sort = currentSort === 'title-asc' ? 'title-desc' : 'title-asc';
+        else if (col === 'date') albumFilters.sort = currentSort === 'date-asc' ? 'date-desc' : 'date-asc';
+        else if (col === 'rating') albumFilters.sort = currentSort === 'rating-desc' ? 'rating-asc' : 'rating-desc';
+        else if (col === 'genre') albumFilters.sort = currentSort === 'genre-asc' ? 'genre-desc' : 'genre-asc';
+      } else {
+        const currentSort = bandFilters.sort;
+        if (col === 'name') bandFilters.sort = currentSort === 'name-asc' ? 'name-desc' : 'name-asc';
+        else if (col === 'rating') bandFilters.sort = currentSort === 'rating-desc' ? 'rating-asc' : 'rating-desc';
+        else if (col === 'country') bandFilters.sort = currentSort === 'country-asc' ? 'country-desc' : 'country-asc';
+        else if (col === 'genre') bandFilters.sort = currentSort === 'genre-asc' ? 'genre-desc' : 'genre-asc';
+      }
+      renderFilterControls();
+      renderApp();
+    }
+
+    function updateAlbumInline(id, field, value) {
+      const idx = library.findIndex(a => a.id == id);
+      if (idx !== -1) {
+        library[idx][field] = field === 'rating' ? parseInt(value) || 0 : value;
+        localStorage.setItem('metal_library', JSON.stringify(library));
+        renderFilterControls();
+        renderApp();
+      }
+    }
+
+    function updateBandInline(id, field, value) {
+      const idx = bands.findIndex(b => b.id == id);
+      if (idx !== -1) {
+        bands[idx][field] = field === 'rating' ? parseInt(value) || 0 : value;
+        localStorage.setItem('metal_bands', JSON.stringify(bands));
+      }
+    }
+
+    function renderFilterControls() {
+      const row = document.getElementById('filter-controls-row');
+      row.innerHTML = '';
+
+      if (activeTab === 'albums') {
+        const rawGenres = [...new Set(library.map(a => a.genre).filter(Boolean))];
+        rawGenres.sort((a, b) => a.localeCompare(b, 'da', { sensitivity: 'base' }));
+
+        const rawYears = [...new Set(library.map(a => {
+          if (!a.date) return '';
+          return a.date.substring(0, 4);
+        }).filter(y => y.length === 4))];
+        rawYears.sort((a, b) => b.localeCompare(a));
+
+        row.innerHTML = `
+          <div>
+            <span class="filter-label">Sorter efter:</span>
+            <select class="filter-select" id="album-sort" onchange="albumFilters.sort=this.value; renderApp();">
+              <option value="artist-asc" ${albumFilters.sort==='artist-asc'?'selected':''}>Band (A–Å)</option>
+              <option value="artist-desc" ${albumFilters.sort==='artist-desc'?'selected':''}>Band (Å–A)</option>
+              <option value="title-asc" ${albumFilters.sort==='title-asc'?'selected':''}>Albumtitel (A–Å)</option>
+              <option value="date-desc" ${albumFilters.sort==='date-desc'?'selected':''}>Dato (Nyeste)</option>
+              <option value="rating-desc" ${albumFilters.sort==='rating-desc'?'selected':''}>Karakter 1-10 (Højeste)</option>
+            </select>
+          </div>
+
+          <div>
+            <span class="filter-label">Årstal:</span>
+            <select class="filter-select" id="album-year-filter" onchange="albumFilters.year=this.value; renderApp();">
+              <option value="all">Alle Årstal</option>
+              ${rawYears.map(y => `<option value="${y}" ${albumFilters.year===y?'selected':''}>${y}</option>`).join('')}
+            </select>
+          </div>
+
+          <div>
+            <span class="filter-label">Genre:</span>
+            <select class="filter-select" id="album-genre-filter" onchange="albumFilters.genre=this.value; renderApp();">
+              <option value="all">Alle Genrer</option>
+              ${rawGenres.map(g => `<option value="${g}" ${albumFilters.genre===g?'selected':''}>${g}</option>`).join('')}
+            </select>
+          </div>
+
+          <div>
+            <span class="filter-label">Min. Karakter:</span>
+            <select class="filter-select" id="album-rating-filter" onchange="albumFilters.minRating=this.value; renderApp();">
+              <option value="0" ${albumFilters.minRating==='0'?'selected':''}>Alle</option>
+              <option value="9" ${albumFilters.minRating==='9'?'selected':''}>9+ / 10 Mesterværker</option>
+              <option value="8" ${albumFilters.minRating==='8'?'selected':''}>8+ / 10 Høj kvalitet</option>
+              <option value="5" ${albumFilters.minRating==='5'?'selected':''}>5+ / 10 Over midten</option>
+            </select>
+          </div>
+        `;
+      } else {
+        const rawGenres = [...new Set(bands.map(b => b.genre).filter(Boolean))];
+        rawGenres.sort((a, b) => a.localeCompare(b, 'da', { sensitivity: 'base' }));
+
+        const rawCountries = [...new Set(bands.map(b => b.country).filter(Boolean))];
+        rawCountries.sort((a, b) => a.localeCompare(b, 'da', { sensitivity: 'base' }));
+
+        row.innerHTML = `
+          <div>
+            <span class="filter-label">Sorter efter:</span>
+            <select class="filter-select" id="band-sort" onchange="bandFilters.sort=this.value; renderApp();">
+              <option value="name-asc" ${bandFilters.sort==='name-asc'?'selected':''}>Band Navn (A–Å)</option>
+              <option value="name-desc" ${bandFilters.sort==='name-desc'?'selected':''}>Band Navn (Å–A)</option>
+              <option value="country-asc" ${bandFilters.sort==='country-asc'?'selected':''}>Land (A–Å)</option>
+              <option value="genre-asc" ${bandFilters.sort==='genre-asc'?'selected':''}>Genre (A–Å)</option>
+              <option value="rating-desc" ${bandFilters.sort==='rating-desc'?'selected':''}>Karakter 1-10 (Højeste)</option>
+            </select>
+          </div>
+
+          <div>
+            <span class="filter-label">Genre:</span>
+            <select class="filter-select" id="band-genre-filter" onchange="bandFilters.genre=this.value; renderApp();">
+              <option value="all">Alle Genrer</option>
+              ${rawGenres.map(g => `<option value="${g}" ${bandFilters.genre===g?'selected':''}>${g}</option>`).join('')}
+            </select>
+          </div>
+
+          <div>
+            <span class="filter-label">Land:</span>
+            <select class="filter-select" id="band-country-filter" onchange="bandFilters.country=this.value; renderApp();">
+              <option value="all">Alle Lande</option>
+              ${rawCountries.map(c => `<option value="${c}" ${bandFilters.country===c?'selected':''}>${c}</option>`).join('')}
+            </select>
+          </div>
+
+          <div>
+            <span class="filter-label">Min Karakter:</span>
+            <select class="filter-select" id="band-rating-filter" onchange="bandFilters.minRating=this.value; renderApp();">
+              <option value="0" ${bandFilters.minRating==='0'?'selected':''}>Alle</option>
+              <option value="9" ${bandFilters.minRating==='9'?'selected':''}>9+ / 10 Top bands</option>
+              <option value="8" ${bandFilters.minRating==='8'?'selected':''}>8+ / 10 Høj kvalitet</option>
+              <option value="5" ${bandFilters.minRating==='5'?'selected':''}>5+ / 10 Over midten</option>
+            </select>
+          </div>
+        `;
+      }
+    }
+
+    // --- DATO-PARSER ---
+    function parseGoogleSheetDate(rawDate) {
+      if (!rawDate) return '';
+      let clean = rawDate.trim();
+
+      let parsed = new Date(clean);
+      if (!isNaN(parsed.getTime())) {
+        const year = parsed.getFullYear();
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      clean = clean.replace(/^[a-zA-ZæøåÆØÅ\s,]+/, '').trim();
+      parsed = new Date(clean);
+      if (!isNaN(parsed.getTime())) {
+        const year = parsed.getFullYear();
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      return '';
+    }
+
+    // --- ALBUMS MODAL MED STORT COVER ---
+    function openAlbumModal(id = null) {
+      document.getElementById('album-modal').classList.add('active');
+      const coverBox = document.getElementById('modal-cover-box');
+      const coverImg = document.getElementById('modal-cover-img');
+
+      if (id) {
+        document.getElementById('album-modal-title').innerText = 'Rediger Album';
+        const item = library.find(a => a.id === id);
+        if (item) {
+          document.getElementById('album-edit-id').value = item.id;
+          document.getElementById('album-artist').value = item.artist || '';
+          document.getElementById('album-title').value = item.title || '';
+          document.getElementById('album-date').value = item.date || '';
+          document.getElementById('album-genre').value = item.genre || '';
+          document.getElementById('album-rating').value = item.rating || 0;
+          document.getElementById('album-review').value = item.review || '';
+
+          // Vis stort cover
+          coverImg.src = `https://picsum.photos/seed/${encodeURIComponent((item.artist || '') + (item.title || ''))}/300/300`;
+          coverBox.style.display = 'block';
+        }
+      } else {
+        document.getElementById('album-modal-title').innerText = 'Tilføj Album';
+        document.getElementById('album-edit-id').value = '';
+        document.getElementById('album-artist').value = '';
+        document.getElementById('album-title').value = '';
+        document.getElementById('album-date').value = '';
+        document.getElementById('album-genre').value = '';
+        document.getElementById('album-rating').value = 0;
+        document.getElementById('album-review').value = '';
+        coverBox.style.display = 'none';
+      }
+    }
+
+    function saveAlbum(isAutoClose = false) {
+      const id = document.getElementById('album-edit-id').value;
+      const artist = document.getElementById('album-artist').value.trim();
+      const title = document.getElementById('album-title').value.trim();
+      const date = document.getElementById('album-date').value;
+      const genre = document.getElementById('album-genre').value.trim() || 'Metal';
+      const rating = parseInt(document.getElementById('album-rating').value) || 0;
+      const review = document.getElementById('album-review').value.trim();
+
+      if (!artist || !title) {
+        if (!isAutoClose) alert('Udfyld både Band og Albumtitel.');
+        closeModal('album-modal');
+        return;
+      }
+
+      if (id) {
+        const idx = library.findIndex(a => a.id == id);
+        if (idx !== -1) library[idx] = { ...library[idx], artist, title, date, genre, rating, review };
+      } else {
+        library.push({ id: Date.now(), artist, title, date, genre, rating, review });
+      }
+
+      localStorage.setItem('metal_library', JSON.stringify(library));
+      closeModal('album-modal');
+      renderFilterControls();
+      renderApp();
+    }
+
+    function deleteAlbum(id) {
+      if (confirm('Slet dette album?')) {
+        library = library.filter(a => a.id !== id);
+        selectedIds.delete(id);
+        updateDeleteSelectedBtn();
+        localStorage.setItem('metal_library', JSON.stringify(library));
+        renderFilterControls();
+        renderApp();
+      }
+    }
+
+    // --- BANDS MODAL ---
+    function openBandModal(id = null) {
+      document.getElementById('band-modal').classList.add('active');
+      if (id) {
+        document.getElementById('band-modal-title').innerText = 'Rediger Band';
+        const item = bands.find(b => b.id === id);
+        if (item) {
+          document.getElementById('band-edit-id').value = item.id;
+          document.getElementById('band-name').value = item.name || '';
+          document.getElementById('band-country').value = item.country || '';
+          document.getElementById('band-genre').value = item.genre || '';
+          document.getElementById('band-rating').value = item.rating || 0;
+          document.getElementById('band-notes').value = item.notes || '';
+        }
+      } else {
+        document.getElementById('band-modal-title').innerText = 'Tilføj Band';
+        document.getElementById('band-edit-id').value = '';
+        document.getElementById('band-name').value = '';
+        document.getElementById('band-country').value = '';
+        document.getElementById('band-genre').value = '';
+        document.getElementById('band-rating').value = 0;
+        document.getElementById('band-notes').value = '';
+      }
+    }
+
+    function saveBand(isAutoClose = false) {
+      const id = document.getElementById('band-edit-id').value;
+      const name = document.getElementById('band-name').value.trim();
+      const country = document.getElementById('band-country').value.trim();
+      const genre = document.getElementById('band-genre').value.trim() || 'Metal';
+      const rating = parseInt(document.getElementById('band-rating').value) || 0;
+      const notes = document.getElementById('band-notes').value.trim();
+
+      if (!name) {
+        if (!isAutoClose) alert('Udfyld venligst Band Navn.');
+        closeModal('band-modal');
+        return;
+      }
+
+      if (id) {
+        const idx = bands.findIndex(b => b.id == id);
+        if (idx !== -1) bands[idx] = { ...bands[idx], name, country, genre, rating, notes };
+      } else {
+        bands.push({ id: Date.now(), name, country, genre, rating, notes });
+      }
+
+      localStorage.setItem('metal_bands', JSON.stringify(bands));
+      closeModal('band-modal');
+      renderFilterControls();
+      renderApp();
+    }
+
+    function deleteBand(id) {
+      if (confirm('Slet dette band?')) {
+        bands = bands.filter(b => b.id !== id);
+        selectedIds.delete(id);
+        updateDeleteSelectedBtn();
+        localStorage.setItem('metal_bands', JSON.stringify(bands));
+        renderFilterControls();
+        renderApp();
+      }
+    }
+
+    // --- IMPORT AF TEKST ---
+    function importPastedData() {
+      const rawText = document.getElementById('paste-input').value.trim();
+      if (!rawText) return alert('Indsæt venligst noget tekst først!');
+
+      Papa.parse(rawText, {
+        header: false,
+        skipEmptyLines: true,
+        complete: function(results) {
+          const rows = results.data;
+          if (!rows || rows.length === 0) return alert('Kunne ikke læse dataene.');
+
+          let startIndex = 0;
+          const firstRowStr = (rows[0][0] || '').toLowerCase() + (rows[0][1] || '').toLowerCase();
+          if (firstRowStr.includes('band') || firstRowStr.includes('album') || firstRowStr.includes('titel') || firstRowStr.includes('navn')) {
+            startIndex = 1;
+          }
+
+          if (activeTab === 'albums') {
+            const imported = [];
+            for (let i = startIndex; i < rows.length; i++) {
+              const r = rows[i];
+              if (!r[0] && !r[1]) continue;
+
+              const artist = (r[0] || '').trim() || 'Ukendt Band';
+              const title = (r[1] || '').trim() || 'Ukendt Titel';
+
+              let date = parseGoogleSheetDate(r[2] || '');
+              let checkIndex = 3;
+              if (!date && r[3]) {
+                date = parseGoogleSheetDate(r[3] || '');
+                checkIndex = 4;
+              }
+
+              let rating = 0;
+              let genre = 'Metal';
+              let reviewParts = [];
+
+              for (let c = checkIndex; c < r.length; c++) {
+                let val = (r[c] || '').trim();
+                if (!val) continue;
+
+                let num = parseInt(val);
+                if (!isNaN(num) && num >= 1 && num <= 10 && rating === 0) {
+                  rating = num;
+                } else if (genre === 'Metal' && isNaN(num)) {
+                  genre = val;
+                } else {
+                  reviewParts.push(val);
+                }
+              }
+
+              imported.push({
+                id: Date.now() + i,
+                artist,
+                title,
+                date,
+                genre,
+                rating,
+                review: reviewParts.join(' ')
+              });
+            }
+
+            library = [...library, ...imported];
+            localStorage.setItem('metal_library', JSON.stringify(library));
+            alert(`Succes! Importerede ${imported.length} albums.`);
+
+          } else {
+            const imported = [];
+            for (let i = startIndex; i < rows.length; i++) {
+              const r = rows[i];
+              if (!r[0]) continue;
+
+              imported.push({
+                id: Date.now() + i,
+                name: (r[0] || '').trim() || 'Ukendt Band',
+                country: (r[1] || '').trim() || 'Ukendt',
+                genre: (r[2] || '').trim() || 'Metal',
+                rating: parseInt(r[3]) || 0,
+                notes: (r[4] || '').trim()
+              });
+            }
+
+            bands = [...bands, ...imported];
+            localStorage.setItem('metal_bands', JSON.stringify(bands));
+            alert(`Succes! Importerede ${imported.length} bands.`);
+          }
+
+          closeModal('import-modal');
+          renderFilterControls();
+          renderApp();
+        }
+      });
+    }
+
+    // --- RESIZEABLE TABLE COLUMNS SCRIPT ---
+    function makeTableResizable(table) {
+      const cols = table.querySelectorAll('th');
+      cols.forEach((col) => {
+        if (col.classList.contains('checkbox-col') || col.style.width.includes('58px')) return;
+
+        const resizer = document.createElement('div');
+        resizer.classList.add('resizer');
+        col.appendChild(resizer);
+
+        let x = 0;
+        let w = 0;
+
+        resizer.addEventListener('mousedown', function (e) {
+          x = e.clientX;
+          w = col.offsetWidth;
+          resizer.classList.add('resizing');
+          
+          document.addEventListener('mousemove', mouseMoveHandler);
+          document.addEventListener('mouseup', mouseUpHandler);
+        });
+
+        function mouseMoveHandler(e) {
+          const dx = e.clientX - x;
+          col.style.width = `${w + dx}px`;
+        }
+
+        function mouseUpHandler() {
+          resizer.classList.remove('resizing');
+          document.removeEventListener('mousemove', mouseMoveHandler);
+          document.removeEventListener('mouseup', mouseUpHandler);
+        }
+      });
+    }
+
+    // --- MAIN RENDER LOGIC ---
+    function renderApp() {
+      const container = document.getElementById('content-container');
+      const stats = document.getElementById('stats-container');
+      const search = document.getElementById('search-bar').value.toLowerCase();
+      container.innerHTML = '';
+
+      const getArrow = (col, currentSort) => currentSort.startsWith(col) ? (currentSort.endsWith('desc') ? ' ⬇' : ' ⬆') : ' ↕';
+      const getSortClass = (col, currentSort) => currentSort.startsWith(col) ? 'sort-active sortable' : 'sortable';
+
+      if (activeTab === 'albums') {
+        let filtered = library.filter(i => {
+          const matchSearch = (i.artist || '').toLowerCase().includes(search) || 
+                              (i.title || '').toLowerCase().includes(search) ||
+                              (i.genre || '').toLowerCase().includes(search) ||
+                              (i.review || '').toLowerCase().includes(search);
+          const matchGenre = albumFilters.genre === 'all' || i.genre === albumFilters.genre;
+          const matchYear = albumFilters.year === 'all' || (i.date && i.date.startsWith(albumFilters.year));
+          const matchRating = (i.rating || 0) >= parseInt(albumFilters.minRating);
+          return matchSearch && matchGenre && matchYear && matchRating;
+        });
+
+        filtered.sort((a, b) => {
+          if (albumFilters.sort === 'rating-desc') return (b.rating || 0) - (a.rating || 0);
+          if (albumFilters.sort === 'rating-asc') return (a.rating || 0) - (b.rating || 0);
+          if (albumFilters.sort === 'artist-asc') return (a.artist || '').localeCompare(b.artist || '', 'da', { sensitivity: 'base' });
+          if (albumFilters.sort === 'artist-desc') return (b.artist || '').localeCompare(a.artist || '', 'da', { sensitivity: 'base' });
+          if (albumFilters.sort === 'title-asc') return (a.title || '').localeCompare(b.title || '', 'da', { sensitivity: 'base' });
+          if (albumFilters.sort === 'date-desc') return (b.date || '').localeCompare(a.date || '');
+          if (albumFilters.sort === 'date-asc') return (a.date || '').localeCompare(b.date || '');
+          return 0;
+        });
+
+        const rated = library.filter(i => i.rating > 0);
+        const avg = rated.length ? (rated.reduce((a, b) => a + b.rating, 0) / rated.length).toFixed(1) : '0.0';
+
+        stats.innerHTML = `
+          <div class="stat-card"><div>Albums Vist / Total</div><div class="stat-number">${filtered.length} / ${library.length}</div></div>
+          <div class="stat-card"><div>Gennemsnitlig Karakter</div><div class="stat-number">${avg} / 10</div></div>
+        `;
+
+        if (!filtered.length) {
+          container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 2rem;">Ingen albums matcher de valgte filtre eller søgning.</p>`;
+          return;
+        }
+
+        let tableHtml = `
+          <div class="table-container">
+            <table class="vault-table" id="main-table">
+              <thead>
+                <tr>
+                  <th class="checkbox-col"><input type="checkbox" onclick="toggleSelectAll(this)"></th>
+                  <th style="width: 58px;">Cover</th>
+                  <th class="${getSortClass('artist', albumFilters.sort)}" onclick="sortByColumn('artist')">Band${getArrow('artist', albumFilters.sort)}</th>
+                  <th class="${getSortClass('title', albumFilters.sort)}" onclick="sortByColumn('title')">Albumtitel${getArrow('title', albumFilters.sort)}</th>
+                  <th class="${getSortClass('date', albumFilters.sort)}" onclick="sortByColumn('date')">Dato${getArrow('date', albumFilters.sort)}</th>
+                  <th class="${getSortClass('rating', albumFilters.sort)}" onclick="sortByColumn('rating')">Karakter${getArrow('rating', albumFilters.sort)}</th>
+                  <th class="${getSortClass('genre', albumFilters.sort)}" onclick="sortByColumn('genre')">Genre${getArrow('genre', albumFilters.sort)}</th>
+                  <th style="text-align:right; width: 80px;">Handling</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        filtered.forEach(item => {
+          let ratingOptions = `<option value="0" ${item.rating===0?'selected':''}>-</option>`;
+          for (let r = 1; r <= 10; r++) {
+            ratingOptions += `<option value="${r}" ${item.rating===r?'selected':''}>${r} ★</option>`;
+          }
+
+          const isChecked = selectedIds.has(item.id) ? 'checked' : '';
+          const imgUrl = `https://picsum.photos/seed/${encodeURIComponent((item.artist || '') + (item.title || ''))}/100/100`;
+          
+          const isUnrated = !item.rating || item.rating === 0;
+          const rowClass = isUnrated ? 'clickable-row row-unrated' : 'clickable-row';
+
+          tableHtml += `
+            <tr class="${rowClass}" onclick="openAlbumModal(${item.id})">
+              <td class="checkbox-col" onclick="event.stopPropagation()">
+                <input type="checkbox" class="item-checkbox" data-id="${item.id}" ${isChecked} onchange="toggleSelectRow(${item.id}, this)">
+              </td>
+              <td onclick="event.stopPropagation()">
+                <img src="${imgUrl}" class="album-thumb" alt="Cover" loading="lazy" onclick="openAlbumModal(${item.id})" title="Klik for at redigere detaljer">
+              </td>
+              <td onclick="event.stopPropagation()">
+                <input class="inline-input" style="font-weight:700;" value="${item.artist || ''}" onblur="updateAlbumInline(${item.id}, 'artist', this.value)">
+              </td>
+              <td onclick="event.stopPropagation()">
+                <input class="inline-input" value="${item.title || ''}" onblur="updateAlbumInline(${item.id}, 'title', this.value)">
+              </td>
+              <td onclick="event.stopPropagation()">
+                <input type="date" class="inline-input" style="width: 130px;" value="${item.date || ''}" onblur="updateAlbumInline(${item.id}, 'date', this.value)">
+              </td>
+              <td onclick="event.stopPropagation()">
+                <select class="inline-select-rating" onchange="updateAlbumInline(${item.id}, 'rating', this.value)">
+                  ${ratingOptions}
+                </select>
+              </td>
+              <td onclick="event.stopPropagation()">
+                <input class="inline-input" value="${item.genre || ''}" placeholder="Genre..." onblur="updateAlbumInline(${item.id}, 'genre', this.value)">
+              </td>
+              <td style="text-align:right;" onclick="event.stopPropagation()">
+                <button class="btn-card btn-delete btn-sm" onclick="deleteAlbum(${item.id})">🗑️</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        tableHtml += `
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        container.innerHTML = tableHtml;
+        makeTableResizable(document.getElementById('main-table'));
+
+      } else {
+        // BANDS TAB
+        let filtered = bands.filter(b => {
+          const matchSearch = (b.name || '').toLowerCase().includes(search) || 
+                              (b.country || '').toLowerCase().includes(search) ||
+                              (b.genre || '').toLowerCase().includes(search);
+          const matchGenre = bandFilters.genre === 'all' || b.genre === bandFilters.genre;
+          const matchCountry = bandFilters.country === 'all' || b.country === bandFilters.country;
+          const matchRating = (b.rating || 0) >= parseInt(bandFilters.minRating);
+          return matchSearch && matchGenre && matchCountry && matchRating;
+        });
+
+        filtered.sort((a, b) => {
+          if (bandFilters.sort === 'rating-desc') return (b.rating || 0) - (a.rating || 0);
+          if (bandFilters.sort === 'rating-asc') return (a.rating || 0) - (b.rating || 0);
+          if (bandFilters.sort === 'name-asc') return (a.name || '').localeCompare(b.name || '', 'da', { sensitivity: 'base' });
+          if (bandFilters.sort === 'name-desc') return (b.name || '').localeCompare(a.name || '', 'da', { sensitivity: 'base' });
+          if (bandFilters.sort === 'country-asc') return (a.country || '').localeCompare(b.country || '', 'da', { sensitivity: 'base' });
+          if (bandFilters.sort === 'country-desc') return (b.country || '').localeCompare(a.country || '', 'da', { sensitivity: 'base' });
+          if (bandFilters.sort === 'genre-asc') return (a.genre || '').localeCompare(b.genre || '', 'da', { sensitivity: 'base' });
+          if (bandFilters.sort === 'genre-desc') return (b.genre || '').localeCompare(a.genre || '', 'da', { sensitivity: 'base' });
+          return 0;
+        });
+
+        const ratedBands = bands.filter(b => b.rating > 0);
+        const avgRating = ratedBands.length ? (ratedBands.reduce((a, b) => a + b.rating, 0) / ratedBands.length).toFixed(1) : '0.0';
+
+        stats.innerHTML = `
+          <div class="stat-card"><div>Bands Vist / Total</div><div class="stat-number">${filtered.length} / ${bands.length}</div></div>
+          <div class="stat-card"><div>Gennemsnitlig Karakter</div><div class="stat-number">${avgRating} / 10</div></div>
+        `;
+
+        if (!filtered.length) {
+          container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 2rem;">Ingen bands matcher de valgte filtre eller søgning.</p>`;
+          return;
+        }
+
+        let tableHtml = `
+          <div class="table-container">
+            <table class="vault-table" id="main-table">
+              <thead>
+                <tr>
+                  <th class="checkbox-col"><input type="checkbox" onclick="toggleSelectAll(this)"></th>
+                  <th class="${getSortClass('name', bandFilters.sort)}" onclick="sortByColumn('name')">Band Navn${getArrow('name', bandFilters.sort)}</th>
+                  <th class="${getSortClass('rating', bandFilters.sort)}" onclick="sortByColumn('rating')">Karakter${getArrow('rating', bandFilters.sort)}</th>
+                  <th class="${getSortClass('country', bandFilters.sort)}" onclick="sortByColumn('country')">Land${getArrow('country', bandFilters.sort)}</th>
+                  <th class="${getSortClass('genre', bandFilters.sort)}" onclick="sortByColumn('genre')">Genre${getArrow('genre', bandFilters.sort)}</th>
+                  <th>Noter</th>
+                  <th style="text-align:right; width: 80px;">Handling</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        filtered.forEach(item => {
+          let ratingOptions = `<option value="0" ${item.rating===0?'selected':''}>-</option>`;
+          for (let r = 1; r <= 10; r++) {
+            ratingOptions += `<option value="${r}" ${item.rating===r?'selected':''}>${r} ★</option>`;
+          }
+
+          const isChecked = selectedIds.has(item.id) ? 'checked' : '';
+
+          tableHtml += `
+            <tr class="clickable-row">
+              <td class="checkbox-col" onclick="event.stopPropagation()">
+                <input type="checkbox" class="item-checkbox" data-id="${item.id}" ${isChecked} onchange="toggleSelectRow(${item.id}, this)">
+              </td>
+              <td>
+                <span class="clickable-name" onclick="openBandModal(${item.id})" title="Klik for at se detaljer">${item.name || ''}</span>
+              </td>
+              <td onclick="event.stopPropagation()">
+                <select class="inline-select-rating" onchange="updateBandInline(${item.id}, 'rating', this.value)">
+                  ${ratingOptions}
+                </select>
+              </td>
+              <td onclick="event.stopPropagation()">
+                <input class="inline-input" value="${item.country || ''}" placeholder="Land..." onblur="updateBandInline(${item.id}, 'country', this.value)">
+              </td>
+              <td onclick="event.stopPropagation()">
+                <input class="inline-input" value="${item.genre || ''}" placeholder="Genre..." onblur="updateBandInline(${item.id}, 'genre', this.value)">
+              </td>
+              <td onclick="event.stopPropagation()">
+                <input class="inline-input" value="${item.notes || ''}" placeholder="Skriv noter..." onblur="updateBandInline(${item.id}, 'notes', this.value)">
+              </td>
+              <td style="text-align:right;" onclick="event.stopPropagation()">
+                <button class="btn-card btn-delete btn-sm" onclick="deleteBand(${item.id})">🗑️</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        tableHtml += `
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        container.innerHTML = tableHtml;
+        makeTableResizable(document.getElementById('main-table'));
+      }
+    }
+
+    renderFilterControls();
+    renderApp();
+  </script>
+</body>
+</html>

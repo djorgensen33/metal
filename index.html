@@ -2,7 +2,7 @@
 <html lang="da" class="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Metal Vault - Album & Band Database</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,21 +29,19 @@
     }
   </script>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       background-color: #0d0d0d;
       color: #f0f0f2;
       font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
     }
     .glow-red {
       text-shadow: 0 0 15px rgba(220, 38, 38, 0.6);
-    }
-    .card-hover {
-      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-    .card-hover:hover {
-      transform: translateY(-4px);
-      border-color: #dc2626;
-      box-shadow: 0 10px 25px -5px rgba(220, 38, 38, 0.2);
     }
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: #0d0d0d; }
@@ -54,72 +52,87 @@
 <body class="min-h-screen flex flex-col selection:bg-red-600 selection:text-white pb-20">
 
   <header class="sticky top-0 z-50 bg-[#0d0d0d]/95 backdrop-blur-md border-b border-metalBorder">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <div class="text-3xl">🤘</div>
-        <div>
-          <h1 class="font-cinzel text-2xl md:text-3xl font-900 tracking-wider text-white uppercase">
-            Metal <span class="text-metalRed glow-red">Vault</span>
-          </h1>
-          <p class="text-xs text-neutral-400 font-sans tracking-wide">Album Database & Metal Nyheder</p>
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+      <div class="flex items-center justify-between w-full md:w-auto">
+        <div class="flex items-center gap-3">
+          <div class="text-2xl md:text-3xl">🤘</div>
+          <div>
+            <h1 class="font-cinzel text-xl md:text-3xl font-900 tracking-wider text-white uppercase">
+              Metal <span class="text-metalRed glow-red">Vault</span>
+            </h1>
+            <p class="text-[11px] md:text-xs text-neutral-400 font-sans tracking-wide">Album Database & Metal Nyheder</p>
+          </div>
         </div>
       </div>
 
       <!-- Nav Tabs -->
-      <div class="flex items-center gap-1 bg-neutral-950 p-1 rounded-xl border border-metalBorder">
-        <button id="tab-vault" onclick="switchView('vault')" class="px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all bg-metalRed text-white shadow-sm">🗄 Hoveddatabase</button>
-        <button id="tab-upcoming" onclick="switchView('upcoming')" class="px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all text-neutral-400 hover:text-white">🚀 Upcoming</button>
-        <button id="tab-news" onclick="switchView('news')" class="px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all text-neutral-400 hover:text-white">📰 Nyheder</button>
+      <div class="flex items-center gap-1 bg-neutral-950 p-1 rounded-xl border border-metalBorder overflow-x-auto max-w-full">
+        <button id="tab-vault" onclick="switchView('vault')" class="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all bg-metalRed text-white shadow-sm whitespace-nowrap">🗄 Database</button>
+        <button id="tab-upcoming" onclick="switchView('upcoming')" class="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all text-neutral-400 hover:text-white whitespace-nowrap">🚀 Upcoming</button>
+        <button id="tab-worklist" onclick="switchView('worklist')" style="display:none;" class="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all text-neutral-400 hover:text-white whitespace-nowrap">📋 Worklist <span id="worklist-badge-count" class="bg-amber-900/60 text-amber-300 px-1.5 py-0.5 rounded text-[10px] ml-0.5">(0)</span></button>
+        <button id="tab-news" onclick="switchView('news')" class="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all text-neutral-400 hover:text-white whitespace-nowrap">📰 Nyheder</button>
       </div>
 
-      <div class="flex items-center gap-3">
-        <button id="delete-selected-btn" style="display:none;" onclick="deleteSelectedAlbums()" class="bg-red-950 hover:bg-red-900 text-red-300 border border-red-900 px-3 py-2 rounded-lg text-xs font-semibold transition-all">🗑 Slet valgte (<span id="selected-count">0</span>)</button>
-        <button id="add-album-btn" style="display:none;" onclick="openAddModal()" class="bg-metalRed hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs font-semibold transition-all shadow-sm">➕ Tilføj Album</button>
-        <button id="sync-btn" style="display:none;" onclick="fetchAllData(true)" class="bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-metalBorder px-3 py-2 rounded-lg text-xs font-semibold transition-all">🔄 Synkroniser</button>
-        <button id="admin-auth-toggle" onclick="toggleAdminAuth()" class="bg-neutral-900 hover:bg-neutral-800 text-neutral-400 border border-metalBorder px-3 py-2 rounded-lg text-xs font-semibold transition-all">🔐 Admin Login</button>
+      <div class="flex items-center gap-2 flex-wrap justify-center">
+        <button id="delete-selected-btn" style="display:none;" onclick="deleteSelectedAlbums()" class="bg-red-950 hover:bg-red-900 text-red-300 border border-red-900 px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-all">🗑 Slet (<span id="selected-count">0</span>)</button>
+        <button id="add-album-btn" style="display:none;" onclick="openAddModal()" class="bg-metalRed hover:bg-red-700 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all shadow-sm">➕ Tilføj</button>
+        <button id="sync-btn" style="display:none;" onclick="fetchAllData(true)" class="bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-metalBorder px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all">🔄 Synk</button>
+        <button id="admin-auth-toggle" onclick="toggleAdminAuth()" class="bg-neutral-900 hover:bg-neutral-800 text-neutral-400 border border-metalBorder px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all">🔐 Admin</button>
       </div>
     </div>
   </header>
 
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-6">
     
     <!-- Filter Panel (Hoveddatabase) -->
-    <div id="filter-panel-container" class="bg-metalCard border border-metalBorder rounded-xl p-4 md:p-6 mb-8 flex flex-wrap gap-4 items-center justify-between shadow-lg">
-      <input type="text" id="search-bar" class="flex-1 min-w-[240px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors" placeholder="🔍 Søg efter band, album, anmeldelse..." oninput="renderApp()">
-      <select id="genre-filter" class="flex-1 min-w-[160px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors cursor-pointer" onchange="renderApp()">
+    <div id="filter-panel-container" class="bg-metalCard border border-metalBorder rounded-xl p-3 sm:p-6 mb-6 flex flex-col sm:flex-row flex-wrap gap-3 items-center justify-between shadow-lg">
+      <input type="text" id="search-bar" class="w-full sm:flex-1 sm:min-w-[200px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 py-2 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors" placeholder="🔍 Søg efter band, album, anmeldelse..." oninput="renderApp()">
+      <select id="genre-filter" class="w-full sm:flex-1 sm:min-w-[140px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 py-2 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors cursor-pointer" onchange="renderApp()">
         <option value="">🏷️ Alle genrer</option>
       </select>
-      <select id="year-filter" class="flex-1 min-w-[150px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors cursor-pointer" onchange="renderApp()">
+      <select id="year-filter" class="w-full sm:flex-1 sm:min-w-[130px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 py-2 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors cursor-pointer" onchange="renderApp()">
         <option value="">📅 Alle årstal</option>
       </select>
-      <select id="rating-filter" class="flex-1 min-w-[160px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors cursor-pointer" onchange="renderApp()">
+      <select id="rating-filter" class="w-full sm:flex-1 sm:min-w-[140px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 py-2 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors cursor-pointer" onchange="renderApp()">
         <option value="">💀 Alle karakterer</option>
         <option value="missing">Mangler karakter (0)</option>
       </select>
-      <button class="bg-transparent border border-metalBorder hover:bg-neutral-800 text-neutral-400 hover:text-white px-4 py-2.5 text-sm rounded-lg transition-all" onclick="resetFilters()">↺ Nulstil</button>
+      <button class="w-full sm:w-auto bg-transparent border border-metalBorder hover:bg-neutral-800 text-neutral-400 hover:text-white px-3 py-2 text-xs sm:text-sm rounded-lg transition-all" onclick="resetFilters()">↺ Nulstil</button>
     </div>
 
     <!-- Filter Panel (Upcoming) -->
-    <div id="upcoming-filter-panel" style="display:none;" class="bg-metalCard border border-metalBorder rounded-xl p-4 md:p-6 mb-8 flex flex-wrap gap-4 items-center justify-between shadow-lg">
-      <input type="text" id="upcoming-search-bar" class="flex-1 min-w-[280px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors" placeholder="🔍 Søg i upcoming (band, titel, genre)..." oninput="renderApp()">
-      <select id="upcoming-genre-filter" class="flex-1 min-w-[200px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors cursor-pointer" onchange="renderApp()">
+    <div id="upcoming-filter-panel" style="display:none;" class="bg-metalCard border border-metalBorder rounded-xl p-3 sm:p-6 mb-6 flex flex-col sm:flex-row flex-wrap gap-3 items-center justify-between shadow-lg">
+      <input type="text" id="upcoming-search-bar" class="w-full sm:flex-1 sm:min-w-[220px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 py-2 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors" placeholder="🔍 Søg i upcoming (band, titel, genre)..." oninput="renderApp()">
+      <select id="upcoming-genre-filter" class="w-full sm:flex-1 sm:min-w-[160px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 py-2 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors cursor-pointer" onchange="renderApp()">
         <option value="">🏷️ Alle genrer</option>
       </select>
-      <button class="bg-transparent border border-metalBorder hover:bg-neutral-800 text-neutral-400 hover:text-white px-4 py-2.5 text-sm rounded-lg transition-all" onclick="resetUpcomingFilters()">↺ Nulstil</button>
+      <button class="w-full sm:w-auto bg-transparent border border-metalBorder hover:bg-neutral-800 text-neutral-400 hover:text-white px-3 py-2 text-xs sm:text-sm rounded-lg transition-all" onclick="resetUpcomingFilters()">↺ Nulstil</button>
     </div>
 
-    <!-- News Header Controls (Kun for Nyhedsvisning) -->
-    <div id="news-header-panel" style="display:none;" class="bg-metalCard border border-metalBorder rounded-xl p-4 md:p-6 mb-8 flex flex-col lg:flex-row gap-4 items-center justify-between shadow-lg">
+    <!-- Filter Panel (Worklist) -->
+    <div id="worklist-filter-panel" style="display:none;" class="bg-metalCard border border-amber-900/50 rounded-xl p-3 sm:p-6 mb-6 flex flex-col sm:flex-row flex-wrap gap-3 items-center justify-between shadow-lg">
+      <div class="flex items-center gap-3">
+        <span class="text-xl">⚠️</span>
+        <div>
+          <h3 class="font-cinzel text-xs sm:text-sm font-bold text-amber-400">Administrations Worklist</h3>
+          <p class="text-[11px] sm:text-xs text-neutral-400">Viser udgivne elementer, der mangler data.</p>
+        </div>
+      </div>
+      <input type="text" id="worklist-search-bar" class="w-full sm:flex-1 sm:min-w-[200px] bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 py-2 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed transition-colors" placeholder="🔍 Filtrer worklist..." oninput="renderApp()">
+    </div>
+
+    <!-- News Header Controls -->
+    <div id="news-header-panel" style="display:none;" class="bg-metalCard border border-metalBorder rounded-xl p-3 sm:p-6 mb-6 flex flex-col lg:flex-row gap-3 items-center justify-between shadow-lg">
       <div id="source-filters" class="flex items-center gap-2 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0">
-        <button onclick="setSourceFilter('all')" class="source-pill active bg-metalRed text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all shadow-sm">Alle Kilder</button>
-        <button onclick="setSourceFilter('Heavymetal.dk')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all">🇩🇰 Heavymetal.dk</button>
-        <button onclick="setSourceFilter('Metal Injection')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all">Metal Injection</button>
-        <button onclick="setSourceFilter('MetalSucks')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all">MetalSucks</button>
-        <button onclick="setSourceFilter('Loudwire')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all">Loudwire</button>
-        <button onclick="setSourceFilter('Decibel Magazine')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all">Decibel Magazine</button>
+        <button onclick="setSourceFilter('all')" class="source-pill active bg-metalRed text-white px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all shadow-sm">Alle Kilder</button>
+        <button onclick="setSourceFilter('Heavymetal.dk')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all">🇩🇰 Heavymetal.dk</button>
+        <button onclick="setSourceFilter('Metal Injection')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all">Metal Injection</button>
+        <button onclick="setSourceFilter('MetalSucks')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all">MetalSucks</button>
+        <button onclick="setSourceFilter('Loudwire')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all">Loudwire</button>
+        <button onclick="setSourceFilter('Decibel Magazine')" class="source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all">Decibel Magazine</button>
       </div>
       <div class="flex items-center gap-3 w-full lg:w-auto justify-end">
-        <button onclick="fetchAllNews(true)" class="flex items-center gap-2 bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-metalBorder px-4 py-2 rounded-lg text-sm font-semibold transition-all">
+        <button onclick="fetchAllNews(true)" class="flex items-center gap-2 bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-metalBorder px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
           <svg id="refresh-icon" class="w-4 h-4 text-metalRed transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
           <span>Opdater Feed</span>
         </button>
@@ -137,31 +150,31 @@
   </main>
 
   <!-- Album Modal -->
-  <div class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" id="album-modal" onclick="closeModal('album-modal')">
-    <div class="bg-metalCard border border-metalBorder rounded-2xl w-full max-w-lg p-6 md:p-8 relative max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
-      <h2 id="album-modal-title" class="font-cinzel text-xl font-bold text-metalRed mb-6">Tilføj Album</h2>
+  <div class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden" id="album-modal" onclick="closeModal('album-modal')">
+    <div class="bg-metalCard border border-metalBorder rounded-2xl w-full max-w-lg p-5 sm:p-8 relative max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <h2 id="album-modal-title" class="font-cinzel text-lg sm:text-xl font-bold text-metalRed mb-4 sm:mb-6">Tilføj Album</h2>
       <input type="hidden" id="album-edit-id">
 
-      <div class="space-y-4">
+      <div class="space-y-3 sm:space-y-4">
         <div>
           <label class="block text-xs font-semibold text-neutral-400 mb-1">Band / Artist</label>
-          <input type="text" id="album-artist" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="f.eks. Judas Priest">
+          <input type="text" id="album-artist" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="f.eks. Judas Priest">
         </div>
         <div>
           <label class="block text-xs font-semibold text-neutral-400 mb-1">Albumtitel</label>
-          <input type="text" id="album-title" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="f.eks. Invincible Shield">
+          <input type="text" id="album-title" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="f.eks. Invincible Shield">
         </div>
         <div>
           <label class="block text-xs font-semibold text-neutral-400 mb-1">Udgivelsesdato</label>
-          <input type="date" id="album-date" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed">
+          <input type="date" id="album-date" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed">
         </div>
         <div>
           <label class="block text-xs font-semibold text-neutral-400 mb-1">Genre</label>
-          <input type="text" id="album-genre" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="f.eks. Heavy Metal">
+          <input type="text" id="album-genre" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="f.eks. Heavy Metal">
         </div>
         <div>
           <label class="block text-xs font-semibold text-neutral-400 mb-1">Karakter (1 - 10)</label>
-          <select id="album-rating" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed cursor-pointer">
+          <select id="album-rating" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed cursor-pointer">
             <option value="0">Ingen karakter endnu</option>
             <option value="1">1 / 10</option><option value="2">2 / 10</option><option value="3">3 / 10</option>
             <option value="4">4 / 10</option><option value="5">5 / 10</option><option value="6">6 / 10</option>
@@ -171,21 +184,22 @@
         </div>
         <div>
           <label class="block text-xs font-semibold text-neutral-400 mb-1">Album Cover URL</label>
-          <input type="url" id="album-cover" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="https://..." oninput="updateCoverPreview(this.value)">
-          <img id="modal-cover-preview" class="w-full h-48 object-contain bg-black border border-metalBorder rounded-lg mt-3 hidden" alt="Forhåndsvisning" onerror="this.style.display='none'">
+          <input type="url" id="album-cover" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="https://..." oninput="updateCoverPreview(this.value)">
+          <img id="modal-cover-preview" class="w-full h-40 sm:h-48 object-contain bg-black border border-metalBorder rounded-lg mt-3 hidden" alt="Forhåndsvisning" onerror="this.style.display='none'">
         </div>
         <div>
           <label class="block text-xs font-semibold text-neutral-400 mb-1">Spotify Link</label>
-          <input type="url" id="album-spotify" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="https://open.spotify.com/album/...">
+          <input type="url" id="album-spotify" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="https://open.spotify.com/album/...">
         </div>
         <div>
           <label class="block text-xs font-semibold text-neutral-400 mb-1">Kommentar / Anmeldelse</label>
-          <textarea id="album-review" rows="3" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-4 py-2.5 text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="Tanker om pladen..."></textarea>
+          <textarea id="album-review" rows="3" class="w-full bg-[#0d0d0d] border border-metalBorder rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-neutral-200 focus:outline-none focus:border-metalRed" placeholder="Tanker om pladen..."></textarea>
         </div>
       </div>
 
-      <div class="mt-6">
-        <button onclick="saveAlbum()" class="w-full bg-metalRed hover:bg-red-700 text-white font-semibold py-3 rounded-lg transition-all shadow-md">💾 Gem Ændringer</button>
+      <div class="mt-5 sm:mt-6 flex flex-col sm:flex-row gap-3">
+        <button id="modal-save-btn" onclick="saveAlbum()" class="flex-1 bg-metalRed hover:bg-red-700 text-white font-semibold py-2.5 sm:py-3 text-xs sm:text-sm rounded-lg transition-all shadow-md">💾 Gem Ændringer</button>
+        <a id="modal-spotify-btn" href="#" target="_blank" style="display:none;" class="flex-1 bg-[#1DB954] hover:bg-[#1aa34a] text-black font-bold py-2.5 sm:py-3 text-xs sm:text-sm rounded-lg transition-all text-center flex items-center justify-center gap-2">🎧 Åbn i Spotify</a>
       </div>
     </div>
   </div>
@@ -198,6 +212,7 @@
     let activeSource = 'all';
     let currentSort = { column: 'artist', asc: true };
     let upcomingSort = { column: 'date', asc: true };
+    let worklistSort = { column: 'artist', asc: true };
     let currentView = 'vault';
     let isAdmin = localStorage.getItem('metal_vault_admin') === 'true';
 
@@ -227,6 +242,7 @@
         if (confirm('Vil du logge ud af admin-tilstand?')) {
           isAdmin = false;
           localStorage.setItem('metal_vault_admin', 'false');
+          if (currentView === 'worklist') currentView = 'vault';
           updateAdminUI();
           renderApp();
         }
@@ -248,28 +264,66 @@
       const btn = document.getElementById('admin-auth-toggle');
       const addBtn = document.getElementById('add-album-btn');
       const syncBtn = document.getElementById('sync-btn');
+      const worklistTab = document.getElementById('tab-worklist');
       
       if (isAdmin) {
-        btn.innerText = '🔓 Log ud (Admin)';
-        btn.classList.add('bg-emerald-950', 'text-emerald-400', 'border-emerald-900');
-        if (addBtn) addBtn.style.display = 'inline-flex';
-        if (syncBtn) syncBtn.style.display = 'inline-flex';
+        btn.innerText = '🔓 Ud';
+        btn.classList.add('bg-emerald-950', 'text-emerald-400', 'border-emerald-900', 'px-2', 'py-1.5', 'text-[11px]');
+        btn.classList.remove('px-2.5', 'py-2');
+        if (addBtn) {
+          addBtn.style.display = 'inline-flex';
+          addBtn.className = 'bg-metalRed hover:bg-red-700 text-white px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-all shadow-sm';
+        }
+        if (syncBtn) {
+          syncBtn.style.display = 'inline-flex';
+          syncBtn.className = 'bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-metalBorder px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-all';
+        }
+        if (worklistTab) worklistTab.style.display = 'inline-flex';
       } else {
-        btn.innerText = '🔐 Admin Login';
-        btn.classList.remove('bg-emerald-950', 'text-emerald-400', 'border-emerald-900');
+        btn.innerText = '🔐 Admin';
+        btn.classList.remove('bg-emerald-950', 'text-emerald-400', 'border-emerald-900', 'px-2', 'py-1.5', 'text-[11px]');
+        btn.classList.add('px-2.5', 'py-2');
         if (addBtn) addBtn.style.display = 'none';
         if (syncBtn) syncBtn.style.display = 'none';
+        if (worklistTab) worklistTab.style.display = 'none';
+      }
+      updateWorklistBadge();
+    }
+
+    function getMissingItems() {
+      return library.filter(item => {
+        if (isUpcoming(item.date)) return false;
+        const rating = parseInt(item.rating) || 0;
+        const hasNoCover = !item.cover || item.cover.trim() === '';
+        const hasNoSpotify = !item.spotify || item.spotify.trim() === '';
+
+        return !item.artist || !item.title || !item.date || !item.genre || rating === 0 || hasNoCover || hasNoSpotify;
+      });
+    }
+
+    function updateWorklistBadge() {
+      const badge = document.getElementById('worklist-badge-count');
+      if (badge) {
+        badge.innerHTML = `(${getMissingItems().length})`;
       }
     }
 
     function switchView(view) {
+      if (view === 'worklist' && !isAdmin) return;
       currentView = view;
-      document.getElementById('tab-vault').className = view === 'vault' ? 'px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all bg-metalRed text-white shadow-sm' : 'px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all text-neutral-400 hover:text-white';
-      document.getElementById('tab-upcoming').className = view === 'upcoming' ? 'px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all bg-metalRed text-white shadow-sm' : 'px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all text-neutral-400 hover:text-white';
-      document.getElementById('tab-news').className = view === 'news' ? 'px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all bg-metalRed text-white shadow-sm' : 'px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all text-neutral-400 hover:text-white';
+      document.getElementById('tab-vault').className = view === 'vault' ? 'px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all bg-metalRed text-white shadow-sm whitespace-nowrap' : 'px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all text-neutral-400 hover:text-white whitespace-nowrap';
+      document.getElementById('tab-upcoming').className = view === 'upcoming' ? 'px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all bg-metalRed text-white shadow-sm whitespace-nowrap' : 'px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all text-neutral-400 hover:text-white whitespace-nowrap';
+      
+      const worklistTab = document.getElementById('tab-worklist');
+      if (worklistTab) {
+        worklistTab.className = view === 'worklist' ? 'px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all bg-amber-600 text-white shadow-sm whitespace-nowrap' : 'px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all text-neutral-400 hover:text-white whitespace-nowrap';
+      }
+
+      document.getElementById('tab-news').className = view === 'news' ? 'px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all bg-metalRed text-white shadow-sm whitespace-nowrap' : 'px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all text-neutral-400 hover:text-white whitespace-nowrap';
       
       document.getElementById('filter-panel-container').style.display = (view === 'vault') ? 'flex' : 'none';
       document.getElementById('upcoming-filter-panel').style.display = (view === 'upcoming') ? 'flex' : 'none';
+      document.getElementById('worklist-filter-panel').style.display = (view === 'worklist') ? 'flex' : 'none';
       document.getElementById('news-header-panel').style.display = (view === 'news') ? 'flex' : 'none';
       
       renderApp();
@@ -288,6 +342,7 @@
             library = data;
             localStorage.setItem('metal_vault_cache', JSON.stringify(library));
             populateFilterDropdowns();
+            updateWorklistBadge();
             renderApp();
           }
         })
@@ -407,7 +462,6 @@
     }
 
     function openAddModal() {
-      if (!isAdmin) return;
       document.getElementById('album-modal').classList.remove('hidden');
       document.getElementById('album-modal-title').innerText = 'Tilføj Nyt Album';
       document.getElementById('album-edit-id').value = '';
@@ -420,6 +474,68 @@
       document.getElementById('album-spotify').value = '';
       document.getElementById('album-review').value = '';
       updateCoverPreview('');
+      
+      const saveBtn = document.getElementById('modal-save-btn');
+      const spotifyBtn = document.getElementById('modal-spotify-btn');
+      
+      if (isAdmin) {
+        saveBtn.style.display = 'block';
+        spotifyBtn.style.display = 'none';
+        setModalInputsDisabled(false);
+      }
+    }
+
+    function openEditModal(artist, title) {
+      const item = library.find(i => String(i.artist||'').trim().toLowerCase() === String(artist).trim().toLowerCase() && String(i.title||'').trim().toLowerCase() === String(title).trim().toLowerCase());
+      if (!item) return;
+
+      document.getElementById('album-modal').classList.remove('hidden');
+      document.getElementById('album-modal-title').innerText = isAdmin ? 'Rediger Album' : 'Albumdetaljer';
+      document.getElementById('album-artist').value = item.artist || '';
+      document.getElementById('album-title').value = item.title || '';
+      
+      // Viser præcis den dato der er gemt (uden ekstra skift frem eller tilbage)
+      let cleanDate = '';
+      if (item.date) {
+        cleanDate = String(item.date).split('T')[0];
+      }
+      document.getElementById('album-date').value = cleanDate;
+
+      document.getElementById('album-genre').value = item.genre || '';
+      document.getElementById('album-rating').value = item.rating || 0;
+      document.getElementById('album-cover').value = item.cover || '';
+      document.getElementById('album-spotify').value = item.spotify || '';
+      document.getElementById('album-review').value = item.review || '';
+      updateCoverPreview(item.cover || '');
+
+      const saveBtn = document.getElementById('modal-save-btn');
+      const spotifyBtn = document.getElementById('modal-spotify-btn');
+
+      if (isAdmin) {
+        saveBtn.style.display = 'block';
+        spotifyBtn.style.display = 'none';
+        setModalInputsDisabled(false);
+      } else {
+        saveBtn.style.display = 'none';
+        setModalInputsDisabled(true);
+        if (item.spotify) {
+          spotifyBtn.href = item.spotify;
+          spotifyBtn.style.display = 'flex';
+        } else {
+          spotifyBtn.style.display = 'none';
+        }
+      }
+    }
+
+    function setModalInputsDisabled(disabled) {
+      document.getElementById('album-artist').disabled = disabled;
+      document.getElementById('album-title').disabled = disabled;
+      document.getElementById('album-date').disabled = disabled;
+      document.getElementById('album-genre').disabled = disabled;
+      document.getElementById('album-rating').disabled = disabled;
+      document.getElementById('album-cover').disabled = disabled;
+      document.getElementById('album-spotify').disabled = disabled;
+      document.getElementById('album-review').disabled = disabled;
     }
 
     function closeModal(id) {
@@ -427,6 +543,7 @@
     }
 
     function saveAlbum() {
+      if (!isAdmin) return;
       const itemData = {
         artist: document.getElementById('album-artist').value,
         title: document.getElementById('album-title').value,
@@ -438,7 +555,7 @@
         review: document.getElementById('album-review').value
       };
       
-      const idx = library.findIndex(i => (i.artist||'').trim().toLowerCase() === itemData.artist.trim().toLowerCase() && (i.title||'').trim().toLowerCase() === itemData.title.trim().toLowerCase());
+      const idx = library.findIndex(i => String(i.artist||'').trim().toLowerCase() === String(itemData.artist).trim().toLowerCase() && String(i.title||'').trim().toLowerCase() === String(itemData.title).trim().toLowerCase());
       if (idx !== -1) {
         library[idx] = Object.assign({}, library[idx], itemData);
       } else {
@@ -446,20 +563,22 @@
       }
       localStorage.setItem('metal_vault_cache', JSON.stringify(library));
       populateFilterDropdowns();
+      updateWorklistBadge();
       renderApp();
 
       sendToSheet(Object.assign({ action: 'save' }, itemData));
       closeModal('album-modal');
     }
 
-    function updateRatingDirect(id, newRating, event) {
+    function updateRatingDirect(artist, title, newRating, event) {
       if (event) event.stopPropagation();
       if (!isAdmin) return;
-      const item = library.find(i => String(i.id) === String(id));
+      const item = library.find(i => String(i.artist||'').trim().toLowerCase() === String(artist).trim().toLowerCase() && String(i.title||'').trim().toLowerCase() === String(title).trim().toLowerCase());
       if (!item) return;
       
       item.rating = parseInt(newRating) || 0;
       localStorage.setItem('metal_vault_cache', JSON.stringify(library));
+      updateWorklistBadge();
       renderApp();
       
       sendToSheet({ action: 'updaterating', artist: item.artist || '', title: item.title || '', rating: item.rating });
@@ -499,6 +618,16 @@
       renderApp();
     }
 
+    function sortWorklistTable(column) {
+      if (worklistSort.column === column) {
+        worklistSort.asc = !worklistSort.asc;
+      } else {
+        worklistSort.column = column;
+        worklistSort.asc = true;
+      }
+      renderApp();
+    }
+
     function toggleSelectAll(master) {
       document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = master.checked);
       updateSelectedCount();
@@ -526,6 +655,7 @@
 
       localStorage.setItem('metal_vault_cache', JSON.stringify(library));
       populateFilterDropdowns();
+      updateWorklistBadge();
       renderApp();
 
       keysToDelete.forEach(k => {
@@ -534,24 +664,68 @@
       });
     }
 
+    // Her lægger vi automatisk +1 dag til, så alle datoer vises korrekt på skærmen
     function addOneDay(dateString) {
       if (!dateString) return null;
-      const d = new Date(dateString);
-      if (isNaN(d)) return null;
-      d.setDate(d.getDate() + 1);
-      return d;
+      let dateStr = String(dateString).split('T')[0];
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        if (!isNaN(d)) {
+          d.setDate(d.getDate() + 1);
+          return d;
+        }
+      }
+      const fallback = new Date(dateString);
+      if (isNaN(fallback)) return null;
+      fallback.setDate(fallback.getDate() + 1);
+      return fallback;
+    }
+
+    function isUpcoming(dateString) {
+      if (!dateString) return false;
+      const d = addOneDay(dateString);
+      if (!d || isNaN(d)) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return d > today;
     }
 
     function setSourceFilter(sourceName) {
       activeSource = sourceName;
       document.querySelectorAll('.source-pill').forEach(btn => {
         if (btn.textContent.includes(sourceName) || (sourceName === 'all' && btn.textContent === 'Alle Kilder')) {
-          btn.className = 'source-pill active bg-metalRed text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all shadow-sm';
+          btn.className = 'source-pill active bg-metalRed text-white px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all shadow-sm';
         } else {
-          btn.className = 'source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all';
+          btn.className = 'source-pill bg-neutral-900 text-neutral-400 hover:text-white border border-metalBorder px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all';
         }
       });
       renderApp();
+    }
+
+    function renderSkulls(rating, safeArtist, safeTitle) {
+      const exactSkulls = rating / 2;
+      let skullsHtml = '';
+      for (let i = 1; i <= 5; i++) {
+        let skullStyle = 'text-neutral-700';
+        let opacityStyle = 'opacity-30';
+
+        if (i <= Math.floor(exactSkulls)) {
+          skullStyle = 'text-metalRed drop-shadow-[0_0_10px_rgba(220,38,38,0.8)]';
+          opacityStyle = 'opacity-100 scale-110';
+        } else if (i === Math.ceil(exactSkulls) && exactSkulls % 1 !== 0) {
+          skullStyle = 'text-metalRed';
+          opacityStyle = 'opacity-60 scale-105';
+        }
+
+        if (isAdmin) {
+          const targetRatingVal = i * 2;
+          skullsHtml += `<button onclick="updateRatingDirect('${safeArtist}', '${safeTitle}', ${targetRatingVal}, event)" title="Sæt karakter til ${targetRatingVal}/10" class="transition-all hover:scale-125 ${skullStyle} ${opacityStyle} text-base sm:text-lg">💀</button>`;
+        } else {
+          skullsHtml += `<span class="transition-all ${skullStyle} ${opacityStyle} text-base sm:text-lg">💀</span>`;
+        }
+      }
+      return skullsHtml;
     }
 
     function renderApp() {
@@ -568,13 +742,20 @@
         return;
       }
 
-      // Hoveddatabase (Vault med 5 kranier og Cover Thumbnail)
+      if (currentView === 'worklist') {
+        renderWorklistView(container);
+        return;
+      }
+
+      // Hoveddatabase (Vault)
       const searchVal = (document.getElementById('search-bar')?.value || '').toLowerCase();
       const genreVal = document.getElementById('genre-filter')?.value || '';
       const yearVal = document.getElementById('year-filter')?.value || '';
       const ratingVal = document.getElementById('rating-filter')?.value || '';
 
       let filtered = library.filter(item => {
+        if (isUpcoming(item.date)) return false;
+
         const artist = String(item.artist || '').toLowerCase();
         const title = String(item.title || '').toLowerCase();
         const genre = String(item.genre || '').toLowerCase();
@@ -618,109 +799,315 @@
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = '<div class="bg-metalCard border border-metalBorder rounded-xl text-center py-16 text-neutral-400">Ingen metal-albums fundet i databasen.</div>';
+        container.innerHTML = `
+          <div class="bg-metalCard border border-metalBorder rounded-xl p-12 text-center">
+            <div class="text-4xl mb-3">📭</div>
+            <h3 class="font-cinzel text-lg font-bold text-white mb-1">Ingen albums fundet</h3>
+            <p class="text-neutral-400 text-sm">Prøv at ændre dine søgekriterier eller nulstil filtrene.</p>
+          </div>
+        `;
         return;
       }
 
-      let html = `
-        <div class="bg-metalCard border border-metalBorder rounded-xl overflow-x-auto shadow-xl">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-neutral-900/85 text-neutral-400 text-xs font-semibold uppercase tracking-wider border-b border-metalBorder">
-                ${isAdmin ? '<th class="p-4 w-10"><input type="checkbox" onclick="toggleSelectAll(this)"></th>' : ''}
-                <th class="p-4 w-16 text-center">Cover</th>
-                <th class="p-4 cursor-pointer hover:text-white" onclick="sortTable('artist')">Band / Artist ${currentSort.column === 'artist' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
-                <th class="p-4 cursor-pointer hover:text-white" onclick="sortTable('title')">Albumtitel ${currentSort.column === 'title' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
-                <th class="p-4 cursor-pointer hover:text-white" onclick="sortTable('date')">Udgivelsesdato ${currentSort.column === 'date' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
-                <th class="p-4 cursor-pointer hover:text-white" onclick="sortTable('genre')">Genre ${currentSort.column === 'genre' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
-                <th class="p-4 cursor-pointer hover:text-white" onclick="sortTable('rating')">Karakter ${currentSort.column === 'rating' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
-                <th class="p-4">Spotify</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-metalBorder text-sm">
+      // 1. Mobil Kort-visning (synlig på små skærme)
+      let mobileHtml = `<div class="grid grid-cols-1 gap-3 md:hidden">`;
+      filtered.forEach(item => {
+        const rating = parseInt(item.rating) || 0;
+        const hasNoCover = !item.cover || item.cover.trim() === '';
+        const hasNoSpotify = !item.spotify || item.spotify.trim() === '';
+        const isMissingData = !item.artist || !item.title || !item.date || !item.genre || rating === 0 || hasNoCover || hasNoSpotify;
+        const cardHighlightClass = isMissingData ? 'bg-amber-950/30 border-amber-500 border-l-4' : 'bg-metalCard border-metalBorder';
+
+        const coverUrl = !hasNoCover ? item.cover : 'https://placehold.co/150x150/141418/dc2626?text=Mangler';
+        const d = addOneDay(item.date);
+        const formattedDate = d && !isNaN(d) ? d.toLocaleDateString('da-DK', { year: 'numeric', month: 'short', day: 'numeric' }) : '<span class="text-amber-400 font-bold text-[11px]">⚠️️ Mangler dato</span>';
+        const genreText = item.genre ? item.genre : '<span class="text-amber-400 font-bold">⚠️ Mangler genre</span>';
+        const rowKey = (String(item.artist || '') + '___' + String(item.title || ''));
+        const safeArtist = String(item.artist || '').replace(/'/g, "\\'");
+        const safeTitle = String(item.title || '').replace(/'/g, "\\'");
+
+        mobileHtml += `
+          <div class="${cardHighlightClass} border rounded-xl p-3.5 shadow-md flex gap-3 items-center relative cursor-pointer" onclick="openEditModal('${safeArtist}', '${safeTitle}')">
+            ${isAdmin ? `<div class="absolute top-2 right-2" onclick="event.stopPropagation()"><input type="checkbox" data-key="${rowKey}" class="row-checkbox rounded accent-metalRed scale-90" onchange="updateSelectedCount()"></div>` : ''}
+            <img src="${coverUrl}" alt="Cover" class="w-16 h-16 object-cover rounded-lg border border-metalBorder shrink-0" onerror="this.src='https://placehold.co/150x150/141418/dc2626?text=Metal'">
+            <div class="flex-1 min-w-0 pr-4">
+              <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="text-[11px] text-neutral-400">${formattedDate}</span>
+                <span class="text-neutral-600">•</span>
+                <span class="text-[11px] text-neutral-300 bg-neutral-900 px-1.5 py-0.5 rounded border border-metalBorder truncate">${genreText}</span>
+              </div>
+              <h4 class="font-bold text-white text-sm truncate">${item.artist || '<span class="text-amber-400">Mangler band</span>'}</h4>
+              <p class="text-xs text-neutral-300 truncate mb-2">${item.title || '<span class="text-amber-400">Mangler titel</span>'}</p>
+              
+              <div class="flex items-center justify-between mt-1 pt-2 border-t border-metalBorder/60">
+                <div class="flex items-center gap-0.5" onclick="event.stopPropagation()">
+                  ${renderSkulls(rating, safeArtist, safeTitle)}
+                </div>
+                <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
+                  ${!hasNoSpotify ? `<a href="${item.spotify}" target="_blank" class="bg-neutral-900 hover:bg-[#1DB954] hover:text-black text-neutral-300 border border-metalBorder p-1.5 rounded text-xs">🎧</a>` : ''}
+                  <button onclick="openEditModal('${safeArtist}', '${safeTitle}')" class="bg-neutral-900 text-neutral-300 border border-metalBorder px-2.5 py-1 rounded text-[11px] font-semibold">🔍 Info</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      mobileHtml += `</div>`;
+
+      // 2. Desktop Tabel-visning (synlig fra medium skærme og op)
+      let desktopHtml = `
+        <div class="bg-metalCard border border-metalBorder rounded-xl overflow-hidden shadow-xl hidden md:block">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-neutral-950/80 border-b border-metalBorder text-xs text-neutral-400 font-semibold uppercase tracking-wider">
+                  ${isAdmin ? '<th class="p-4 w-10 text-center"><input type="checkbox" onchange="toggleSelectAll(this)" class="rounded accent-metalRed"></th>' : ''}
+                  <th class="p-4 w-16 text-center">Cover</th>
+                  <th class="p-4 cursor-pointer hover:text-white transition-colors" onclick="sortTable('artist')">Band ${currentSort.column === 'artist' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
+                  <th class="p-4 cursor-pointer hover:text-white transition-colors" onclick="sortTable('title')">Album ${currentSort.column === 'title' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
+                  <th class="p-4 cursor-pointer hover:text-white transition-colors" onclick="sortTable('date')">Udgivet ${currentSort.column === 'date' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
+                  <th class="p-4 cursor-pointer hover:text-white transition-colors" onclick="sortTable('genre')">Genre ${currentSort.column === 'genre' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
+                  <th class="p-4 cursor-pointer hover:text-white transition-colors text-center" onclick="sortTable('rating')">Karakter ${currentSort.column === 'rating' ? (currentSort.asc ? '▲' : '▼') : ''}</th>
+                  <th class="p-4 text-right">Spotify / Info</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-metalBorder text-sm">
       `;
 
       filtered.forEach(item => {
         const rating = parseInt(item.rating) || 0;
-        const isMissingRating = rating === 0;
-        const rowClass = isMissingRating ? 'hover:bg-red-950/20 bg-red-950/10 cursor-pointer transition-colors' : 'hover:bg-neutral-900/50 cursor-pointer transition-colors';
-        const uniqueKey = (item.artist || '') + '___' + (item.title || '');
+        const hasNoCover = !item.cover || item.cover.trim() === '';
+        const hasNoSpotify = !item.spotify || item.spotify.trim() === '';
+        const isMissingData = !item.artist || !item.title || !item.date || !item.genre || rating === 0 || hasNoCover || hasNoSpotify;
+        const rowHighlightClass = isMissingData ? 'bg-amber-950/20 hover:bg-amber-900/30 border-l-4 border-amber-500' : 'hover:bg-neutral-900/50';
 
-        let skullsHtml = '';
-        for (let s = 1; s <= 5; s++) {
-          const skullValue = s * 2;
-          let skullStyle = 'color: #3f3f46;';
-          let titleText = `${s * 2 - 1}-${s * 2}/10`;
+        const d = addOneDay(item.date);
+        const formattedDate = d && !isNaN(d) ? d.toLocaleDateString('da-DK', { year: 'numeric', month: 'short', day: 'numeric' }) : '<span class="text-amber-400 bg-amber-950/60 border border-amber-900 px-2 py-0.5 rounded text-[11px] font-bold">⚠️ Mangler dato</span>';
+        const coverUrl = !hasNoCover ? item.cover : 'https://placehold.co/150x150/141418/dc2626?text=Mangler';
+        const rowKey = (String(item.artist || '') + '___' + String(item.title || ''));
 
-          if (rating >= skullValue) {
-            skullStyle = 'color: #dc2626; filter: drop-shadow(0 0 6px rgba(220,38,38,0.7));';
-          } else if (rating === skullValue - 1) {
-            skullStyle = 'background: linear-gradient(90deg, #dc2626 50%, #3f3f46 50%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;';
-          }
+        const safeArtist = String(item.artist || '').replace(/'/g, "\\'");
+        const safeTitle = String(item.title || '').replace(/'/g, "\\'");
+        const genreDisplay = item.genre && item.genre.trim() !== '' ? `<span class="bg-neutral-900 border border-metalBorder px-2.5 py-1 rounded-md text-xs text-neutral-300">${item.genre}</span>` : '<span class="text-amber-400 bg-amber-950/60 border border-amber-900 px-2 py-0.5 rounded text-[11px] font-bold">⚠️ Mangler genre</span>';
 
-          skullsHtml += `<span class="text-base cursor-pointer hover:scale-125 transition-transform inline-block" style="${skullStyle}" onclick="updateRatingDirect('${item.id || uniqueKey}', ${skullValue}, event)" title="${titleText}">💀</span>`;
-        }
-
-        let formattedDate = '-';
-        if (item.date) {
-          const d = addOneDay(item.date);
-          if (d && !isNaN(d)) {
-            formattedDate = d.toLocaleDateString('da-DK', { year: 'numeric', month: 'short', day: 'numeric' });
-          }
-        }
-
-        html += `
-          <tr class="${rowClass}" onclick="openEditModalFromRow('${encodeURIComponent(uniqueKey)}')">
-            ${isAdmin ? `<td class="p-4" onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" data-key="${uniqueKey}" onclick="updateSelectedCount()"></td>` : ''}
-            <td class="p-3 text-center">
-              ${item.cover ? `<img src="${item.cover}" alt="Cover" class="w-10 h-10 object-cover rounded bg-neutral-950 border border-metalBorder mx-auto" onerror="this.style.display='none'">` : '<div class="w-10 h-10 rounded bg-neutral-900 border border-metalBorder flex items-center justify-center text-xs mx-auto">💿</div>'}
+        desktopHtml += `
+          <tr class="${rowHighlightClass} transition-colors cursor-pointer group" onclick="openEditModal('${safeArtist}', '${safeTitle}')">
+            ${isAdmin ? `<td class="p-4 text-center" onclick="event.stopPropagation()"><input type="checkbox" data-key="${rowKey}" class="row-checkbox rounded accent-metalRed" onchange="updateSelectedCount()"></td>` : ''}
+            <td class="p-3 text-center relative">
+              <img src="${coverUrl}" alt="Cover" class="w-14 h-14 object-cover rounded-lg border border-metalBorder shadow-md mx-auto group-hover:border-metalRed transition-colors" onerror="this.src='https://placehold.co/150x150/141418/dc2626?text=Mangler'">
+              ${hasNoCover ? '<span class="absolute top-1 right-1 text-[10px]" title="Mangler cover">⚠️</span>' : ''}
             </td>
-            <td class="p-4 font-bold text-neutral-100">${item.artist || '-'}</td>
-            <td class="p-4 text-neutral-300">${item.title || '-'}</td>
-            <td class="p-4 text-neutral-400">${formattedDate}</td>
-            <td class="p-4 text-neutral-400">${item.genre || '-'}</td>
-            <td class="p-4">
-              <div class="flex items-center gap-1.5">
-                <div class="flex items-center gap-0.5">${skullsHtml}</div>
-                <span class="text-xs font-semibold text-neutral-400 ml-1">${rating > 0 ? rating + '/10' : 'Mangler'}</span>
+            <td class="p-4 font-semibold text-white">${item.artist || '<span class="text-amber-400 text-xs font-bold">⚠️ Mangler band</span>'}</td>
+            <td class="p-4 text-neutral-200">${item.title || '<span class="text-amber-400 text-xs font-bold">⚠️️ Mangler titel</span>'}</td>
+            <td class="p-4 text-neutral-400 text-xs">${formattedDate}</td>
+            <td class="p-4">${genreDisplay}</td>
+            <td class="p-4 text-center">
+              <div class="flex items-center justify-center gap-1 mb-1" onclick="event.stopPropagation()">
+                ${renderSkulls(rating, safeArtist, safeTitle)}
               </div>
+              <span class="text-xs font-bold ${rating > 0 ? 'text-metalRed' : 'text-amber-400 bg-amber-950/60 border border-amber-900 px-1.5 py-0.5 rounded'}">
+                ${rating > 0 ? rating + ' / 10' : '⚠️ Mangler karakter'}
+              </span>
             </td>
-            <td class="p-4">
-              ${item.spotify ? `<a href="${item.spotify}" target="_blank" onclick="event.stopPropagation()" class="text-emerald-400 hover:text-emerald-300 font-semibold text-sm flex items-center gap-1.5">🎧 Lyt</a>` : '-'}
+            <td class="p-4 text-right" onclick="event.stopPropagation()">
+              <div class="flex items-center justify-end gap-2">
+                ${!hasNoSpotify ? `<a href="${item.spotify}" target="_blank" class="bg-neutral-900 hover:bg-[#1DB954] hover:text-black text-neutral-400 border border-metalBorder p-2 rounded-lg transition-all" title="Åbn i Spotify">🎧</a>` : '<span class="text-amber-400 bg-amber-950/60 border border-amber-900 px-2 py-1 rounded text-[10px] font-bold">⚠️ Mangler Spotify</span>'}
+                <button onclick="openEditModal('${safeArtist}', '${safeTitle}')" class="bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-metalBorder px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">🔍 Info</button>
+              </div>
             </td>
           </tr>
         `;
       });
 
-      html += `</tbody></table></div>`;
-      container.innerHTML = html;
-      updateSelectedCount();
+      desktopHtml += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = mobileHtml + desktopHtml;
+    }
+
+    function renderWorklistView(container) {
+      const searchVal = (document.getElementById('worklist-search-bar')?.value || '').toLowerCase();
+      let missingItems = getMissingItems();
+
+      let filtered = missingItems.filter(item => {
+        const artist = String(item.artist || '').toLowerCase();
+        const title = String(item.title || '').toLowerCase();
+        const genre = String(item.genre || '').toLowerCase();
+        return !searchVal || artist.includes(searchVal) || title.includes(searchVal) || genre.includes(searchVal);
+      });
+
+      filtered.sort((a, b) => {
+        let valA = a[worklistSort.column] || '';
+        let valB = b[worklistSort.column] || '';
+
+        if (worklistSort.column === 'rating') {
+          valA = parseInt(valA) || 0;
+          valB = parseInt(valB) || 0;
+        } else if (worklistSort.column === 'date') {
+          valA = valA ? new Date(valA).getTime() : 0;
+          valB = valB ? new Date(valB).getTime() : 0;
+        } else {
+          valA = String(valA).toLowerCase();
+          valB = String(valB).toLowerCase();
+        }
+
+        if (valA < valB) return worklistSort.asc ? -1 : 1;
+        if (valA > valB) return worklistSort.asc ? 1 : -1;
+        return 0;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-metalCard border border-emerald-900/50 rounded-xl p-12 text-center shadow-xl">
+            <div class="text-4xl mb-3">🎉</div>
+            <h3 class="font-cinzel text-lg font-bold text-emerald-400 mb-1">Alt er opdateret!</h3>
+            <p class="text-neutral-400 text-sm">Worklisten er helt tom. Der mangler ingen data i de udgivne albums.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // 1. Mobil Kort-visning (Worklist)
+      let mobileHtml = `<div class="grid grid-cols-1 gap-3 md:hidden">`;
+      filtered.forEach(item => {
+        const rating = parseInt(item.rating) || 0;
+        const hasNoCover = !item.cover || item.cover.trim() === '';
+        const hasNoSpotify = !item.spotify || item.spotify.trim() === '';
+        const coverUrl = !hasNoCover ? item.cover : 'https://placehold.co/150x150/141418/dc2626?text=Mangler';
+        const d = addOneDay(item.date);
+        const formattedDate = d && !isNaN(d) ? d.toLocaleDateString('da-DK', { year: 'numeric', month: 'short', day: 'numeric' }) : '<span class="text-amber-400 font-bold text-[11px]">⚠️ Mangler dato</span>';
+        const safeArtist = String(item.artist || '').replace(/'/g, "\\'");
+        const safeTitle = String(item.title || '').replace(/'/g, "\\'");
+
+        let missingBadges = [];
+        if (!item.artist) missingBadges.push('Band');
+        if (!item.title) missingBadges.push('Titel');
+        if (!item.date) missingBadges.push('Dato');
+        if (!item.genre) missingBadges.push('Genre');
+        if (rating === 0) missingBadges.push('Karakter');
+        if (hasNoCover) missingBadges.push('Cover');
+        if (hasNoSpotify) missingBadges.push('Spotify');
+
+        mobileHtml += `
+          <div class="bg-amber-950/30 border border-amber-500/60 border-l-4 border-l-amber-500 rounded-xl p-3.5 shadow-md flex gap-3 items-center cursor-pointer" onclick="openEditModal('${safeArtist}', '${safeTitle}')">
+            <img src="${coverUrl}" alt="Cover" class="w-16 h-16 object-cover rounded-lg border border-metalBorder shrink-0" onerror="this.src='https://placehold.co/150x150/141418/dc2626?text=Mangler'">
+            <div class="flex-1 min-w-0">
+              <h4 class="font-bold text-white text-sm truncate">${item.artist || '<span class="text-amber-400">Mangler band</span>'}</h4>
+              <p class="text-xs text-neutral-300 truncate mb-1.5">${item.title || '<span class="text-amber-400">Mangler titel</span>'}</p>
+              
+              <div class="flex flex-wrap gap-1 mb-2.5">
+                ${missingBadges.map(b => `<span class="bg-amber-950 text-amber-300 border border-amber-900 text-[9px] px-1.5 py-0.5 rounded font-semibold">⚠️ ${b}</span>`).join('')}
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t border-amber-900/40">
+                <span class="text-[11px] text-neutral-400">${formattedDate}</span>
+                <button onclick="openEditModal('${safeArtist}', '${safeTitle}')" class="bg-amber-950 text-amber-300 border border-amber-900 px-2.5 py-1 rounded text-[11px] font-semibold">✏️ Rediger</button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      mobileHtml += `</div>`;
+
+      // 2. Desktop Tabel-visning (Worklist)
+      let desktopHtml = `
+        <div class="bg-metalCard border border-amber-900/50 rounded-xl overflow-hidden shadow-xl hidden md:block">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-neutral-950/80 border-b border-metalBorder text-xs text-amber-400 font-semibold uppercase tracking-wider">
+                  <th class="p-4 w-16 text-center">Cover</th>
+                  <th class="p-4 cursor-pointer hover:text-white transition-colors" onclick="sortWorklistTable('artist')">Band ${worklistSort.column === 'artist' ? (worklistSort.asc ? '▲' : '▼') : ''}</th>
+                  <th class="p-4 cursor-pointer hover:text-white transition-colors" onclick="sortWorklistTable('title')">Album ${worklistSort.column === 'title' ? (worklistSort.asc ? '▲' : '▼') : ''}</th>
+                  <th class="p-4 cursor-pointer hover:text-white transition-colors" onclick="sortWorklistTable('date')">Udgivet ${worklistSort.column === 'date' ? (worklistSort.asc ? '▲' : '▼') : ''}</th>
+                  <th class="p-4 cursor-pointer hover:text-white transition-colors" onclick="sortWorklistTable('genre')">Genre ${worklistSort.column === 'genre' ? (worklistSort.asc ? '▲' : '▼') : ''}</th>
+                  <th class="p-4 cursor-pointer hover:text-white transition-colors text-center" onclick="sortWorklistTable('rating')">Karakter ${worklistSort.column === 'rating' ? (worklistSort.asc ? '▲' : '▼') : ''}</th>
+                  <th class="p-4 text-right">Mangler / Ret data</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-metalBorder text-sm">
+      `;
+
+      filtered.forEach(item => {
+        const rating = parseInt(item.rating) || 0;
+        const hasNoCover = !item.cover || item.cover.trim() === '';
+        const hasNoSpotify = !item.spotify || item.spotify.trim() === '';
+
+        const coverUrl = !hasNoCover ? item.cover : 'https://placehold.co/150x150/141418/dc2626?text=Mangler';
+        const d = addOneDay(item.date);
+        const formattedDate = d && !isNaN(d) ? d.toLocaleDateString('da-DK', { year: 'numeric', month: 'short', day: 'numeric' }) : '<span class="text-amber-400 bg-amber-950/60 border border-amber-900 px-2 py-0.5 rounded text-[11px] font-bold">⚠️ Mangler dato</span>';
+        const genreDisplay = item.genre && item.genre.trim() !== '' ? `<span class="bg-neutral-900 border border-metalBorder px-2.5 py-1 rounded-md text-xs text-neutral-300">${item.genre}</span>` : '<span class="text-amber-400 bg-amber-950/60 border border-amber-900 px-2 py-0.5 rounded text-[11px] font-bold">⚠️ Mangler genre</span>';
+
+        const safeArtist = String(item.artist || '').replace(/'/g, "\\'");
+        const safeTitle = String(item.title || '').replace(/'/g, "\\'");
+
+        let missingBadges = [];
+        if (!item.artist) missingBadges.push('Band');
+        if (!item.title) missingBadges.push('Titel');
+        if (!item.date) missingBadges.push('Dato');
+        if (!item.genre) missingBadges.push('Genre');
+        if (rating === 0) missingBadges.push('Karakter');
+        if (hasNoCover) missingBadges.push('Cover');
+        if (hasNoSpotify) missingBadges.push('Spotify');
+
+        desktopHtml += `
+          <tr class="bg-amber-950/20 hover:bg-amber-900/30 border-l-4 border-amber-500 transition-colors cursor-pointer group" onclick="openEditModal('${safeArtist}', '${safeTitle}')">
+            <td class="p-3 text-center">
+              <img src="${coverUrl}" alt="Cover" class="w-14 h-14 object-cover rounded-lg border border-metalBorder shadow-md mx-auto group-hover:border-amber-400 transition-colors" onerror="this.src='https://placehold.co/150x150/141418/dc2626?text=Mangler'">
+            </td>
+            <td class="p-4 font-semibold text-white">${item.artist || '<span class="text-amber-400 text-xs font-bold">⚠️ Mangler band</span>'}</td>
+            <td class="p-4 text-neutral-200">${item.title || '<span class="text-amber-400 text-xs font-bold">⚠️ Mangler titel</span>'}</td>
+            <td class="p-4 text-neutral-400 text-xs">${formattedDate}</td>
+            <td class="p-4">${genreDisplay}</td>
+            <td class="p-4 text-center">
+              <span class="text-xs font-bold ${rating > 0 ? 'text-neutral-300' : 'text-amber-400 bg-amber-950/60 border border-amber-900 px-2 py-1 rounded'}">
+                ${rating > 0 ? rating + ' / 10' : '⚠️ Mangler karakter'}
+              </span>
+            </td>
+            <td class="p-4 text-right" onclick="event.stopPropagation()">
+              <div class="flex flex-col items-end gap-1.5">
+                <div class="flex flex-wrap gap-1 justify-end max-w-[200px]">
+                  ${missingBadges.map(b => `<span class="bg-amber-950 text-amber-300 border border-amber-900 text-[10px] px-1.5 py-0.5 rounded font-semibold">⚠️ ${b}</span>`).join('')}
+                </div>
+                <button onclick="openEditModal('${safeArtist}', '${safeTitle}')" class="bg-amber-950 hover:bg-amber-900 text-amber-300 border border-amber-900 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">✏️ Rediger</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      desktopHtml += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = mobileHtml + desktopHtml;
     }
 
     function renderUpcomingView(container) {
-      const today = new Date();
-      today.setHours(0,0,0,0);
-
       const searchVal = (document.getElementById('upcoming-search-bar')?.value || '').toLowerCase();
       const genreVal = document.getElementById('upcoming-genre-filter')?.value || '';
 
-      const upcoming = library.filter(item => {
-        if (!item.date) return false;
-        const d = addOneDay(item.date);
-        if (!d || isNaN(d) || d < today) return false;
+      let filtered = library.filter(item => {
+        if (!isUpcoming(item.date)) return false;
 
         const artist = String(item.artist || '').toLowerCase();
         const title = String(item.title || '').toLowerCase();
         const genre = String(item.genre || '').toLowerCase();
-        const review = String(item.review || '').toLowerCase();
 
-        const matchesSearch = !searchVal || artist.includes(searchVal) || title.includes(searchVal) || genre.includes(searchVal) || review.includes(searchVal);
+        const matchesSearch = !searchVal || artist.includes(searchVal) || title.includes(searchVal) || genre.includes(searchVal);
         const matchesGenre = !genreVal || String(item.genre || '').trim() === genreVal;
 
         return matchesSearch && matchesGenre;
       });
 
-      upcoming.sort((a, b) => {
+      filtered.sort((a, b) => {
         let valA = a[upcomingSort.column] || '';
         let valB = b[upcomingSort.column] || '';
 
@@ -737,158 +1124,163 @@
         return 0;
       });
 
-      if (upcoming.length === 0) {
-        container.innerHTML = '<div class="bg-metalCard border border-metalBorder rounded-xl text-center py-16 text-neutral-400">Ingen upcoming albums fundet, der matcher din søgning.</div>';
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-metalCard border border-metalBorder rounded-xl p-12 text-center">
+            <div class="text-4xl mb-3">🚀</div>
+            <h3 class="font-cinzel text-lg font-bold text-white mb-1">Ingen upcoming albums</h3>
+            <p class="text-neutral-400 text-sm">Der er ingen kommende udgivelser der matcher dine filtre.</p>
+          </div>
+        `;
         return;
       }
 
-      let html = `
-        <div class="bg-metalCard border border-metalBorder rounded-xl overflow-x-auto shadow-xl">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-neutral-900/85 text-neutral-400 text-xs font-semibold uppercase tracking-wider border-b border-metalBorder">
-                <th class="p-4 w-16 text-center">Cover</th>
-                <th class="p-4 cursor-pointer hover:text-white" onclick="sortUpcomingTable('artist')">Band / Artist ${upcomingSort.column === 'artist' ? (upcomingSort.asc ? '▲' : '▼') : ''}</th>
-                <th class="p-4 cursor-pointer hover:text-white" onclick="sortUpcomingTable('title')">Albumtitel ${upcomingSort.column === 'title' ? (upcomingSort.asc ? '▲' : '▼') : ''}</th>
-                <th class="p-4 cursor-pointer hover:text-white" onclick="sortUpcomingTable('date')">Udgivelsesdato ${upcomingSort.column === 'date' ? (upcomingSort.asc ? '▲' : '▼') : ''}</th>
-                <th class="p-4 cursor-pointer hover:text-white" onclick="sortUpcomingTable('genre')">Genre ${upcomingSort.column === 'genre' ? (upcomingSort.asc ? '▲' : '▼') : ''}</th>
-                <th class="p-4">Status</th>
-                <th class="p-4">Spotify</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-metalBorder text-sm">
+      // 1. Mobil Kort-visning (Upcoming)
+      let mobileHtml = `<div class="grid grid-cols-1 gap-3 md:hidden">`;
+      filtered.forEach(item => {
+        const hasNoCover = !item.cover || item.cover.trim() === '';
+        const coverUrl = !hasNoCover ? item.cover : 'https://placehold.co/150x150/141418/dc2626?text=Upcoming';
+        const isMissingData = !item.artist || !item.title || !item.date || !item.genre;
+        const cardHighlightClass = isMissingData ? 'bg-amber-950/30 border-amber-500 border-l-4' : 'bg-metalCard border-metalBorder';
+        const d = addOneDay(item.date);
+        const formattedDate = d && !isNaN(d) ? d.toLocaleDateString('da-DK', { year: 'numeric', month: 'long', day: 'numeric' }) : '<span class="text-amber-400 font-bold text-[11px]">⚠️ Mangler dato</span>';
+        const genreText = item.genre ? item.genre : '<span class="text-amber-400 font-bold">⚠️ Mangler genre</span>';
+        const safeArtist = String(item.artist || '').replace(/'/g, "\\'");
+        const safeTitle = String(item.title || '').replace(/'/g, "\\'");
+
+        mobileHtml += `
+          <div class="${cardHighlightClass} border rounded-xl p-3.5 shadow-md flex gap-3 items-center cursor-pointer" onclick="openEditModal('${safeArtist}', '${safeTitle}')">
+            <img src="${coverUrl}" alt="Cover" class="w-16 h-16 object-cover rounded-lg border border-metalBorder shrink-0" onerror="this.src='https://placehold.co/150x150/141418/dc2626?text=Upcoming'">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="text-[11px] text-neutral-300 font-semibold">${formattedDate}</span>
+              </div>
+              <h4 class="font-bold text-white text-sm truncate">${item.artist || '<span class="text-amber-400">Mangler band</span>'}</h4>
+              <p class="text-xs text-neutral-300 truncate mb-2">${item.title || '<span class="text-amber-400">Mangler titel</span>'}</p>
+              
+              <div class="flex items-center justify-between pt-2 border-t border-metalBorder/60">
+                <span class="text-[11px] text-neutral-400 bg-neutral-900 px-1.5 py-0.5 rounded border border-metalBorder truncate">${genreText}</span>
+                <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
+                  ${item.spotify ? `<a href="${item.spotify}" target="_blank" class="bg-neutral-900 text-neutral-300 border border-metalBorder p-1.5 rounded text-xs">🎧</a>` : ''}
+                  <button onclick="openEditModal('${safeArtist}', '${safeTitle}')" class="bg-neutral-900 text-neutral-300 border border-metalBorder px-2.5 py-1 rounded text-[11px] font-semibold">🔍 Info</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      mobileHtml += `</div>`;
+
+      // 2. Desktop Tabel-visning (Upcoming)
+      let desktopHtml = `
+        <div class="bg-metalCard border border-metalBorder rounded-xl overflow-hidden shadow-xl hidden md:block">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-neutral-950/80 border-b border-metalBorder text-xs text-neutral-400 font-semibold uppercase tracking-wider">
+                  <th class="p-4 w-16 text-center">Cover</th>
+                  <th class="p-4 cursor-pointer hover:text-white transition-colors" onclick="sortUpcomingTable('artist')">Band ${upcomingSort.column === 'artist' ? (upcomingSort.asc ? '▲' : '▼') : ''}</th>
+                  <th class="p-4 cursor-pointer hover:text-white transition-colors" onclick="sortUpcomingTable('title')">Album ${upcomingSort.column === 'title' ? (upcomingSort.asc ? '▲' : '▼') : ''}</th>
+                  <th class="p-4 cursor-pointer hover:text-white transition-colors" onclick="sortUpcomingTable('date')">Udgivelsesdato ${upcomingSort.column === 'date' ? (upcomingSort.asc ? '▲' : '▼') : ''}</th>
+                  <th class="p-4 cursor-pointer hover:text-white transition-colors" onclick="sortUpcomingTable('genre')">Genre ${upcomingSort.column === 'genre' ? (upcomingSort.asc ? '▲' : '▼') : ''}</th>
+                  <th class="p-4 text-right">Spotify / Info</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-metalBorder text-sm">
       `;
 
-      upcoming.forEach(item => {
+      filtered.forEach(item => {
+        const hasNoCover = !item.cover || item.cover.trim() === '';
+        const coverUrl = !hasNoCover ? item.cover : 'https://placehold.co/150x150/141418/dc2626?text=Upcoming';
+        const isMissingData = !item.artist || !item.title || !item.date || !item.genre;
+        const rowHighlightClass = isMissingData ? 'bg-amber-950/20 hover:bg-amber-900/30 border-l-4 border-amber-500' : 'hover:bg-neutral-900/50';
+
         const d = addOneDay(item.date);
-        const diffTime = d - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        let badgeText = `Om ${diffDays} dage`;
-        let badgeClass = 'bg-red-950 text-red-400 border-red-900';
-        if (diffDays === 0) {
-          badgeText = 'Udgives i dag! 🎸';
-          badgeClass = 'bg-emerald-950 text-emerald-400 border-emerald-900';
-        } else if (diffDays === 1) {
-          badgeText = 'Udgives i morgen';
-        }
+        const formattedDate = d && !isNaN(d) ? d.toLocaleDateString('da-DK', { year: 'numeric', month: 'long', day: 'numeric' }) : '<span class="text-amber-400 bg-amber-950/60 border border-amber-900 px-2 py-0.5 rounded text-[11px] font-bold">⚠️ Mangler dato</span>';
+        const genreDisplay = item.genre && item.genre.trim() !== '' ? `<span class="bg-neutral-900 border border-metalBorder px-2.5 py-1 rounded-md text-xs text-neutral-300">${item.genre}</span>` : '<span class="text-amber-400 bg-amber-950/60 border border-amber-900 px-2 py-0.5 rounded text-[11px] font-bold">⚠️ Mangler genre</span>';
 
-        let formattedDate = d.toLocaleDateString('da-DK', { year: 'numeric', month: 'short', day: 'numeric' });
-        const uniqueKey = (item.artist || '') + '___' + (item.title || '');
+        const safeArtist = String(item.artist || '').replace(/'/g, "\\'");
+        const safeTitle = String(item.title || '').replace(/'/g, "\\'");
 
-        html += `
-          <tr class="hover:bg-neutral-900/50 cursor-pointer transition-colors" onclick="openEditModalFromRow('${encodeURIComponent(uniqueKey)}')">
+        desktopHtml += `
+          <tr class="${rowHighlightClass} transition-colors cursor-pointer group" onclick="openEditModal('${safeArtist}', '${safeTitle}')">
             <td class="p-3 text-center">
-              ${item.cover ? `<img src="${item.cover}" alt="Cover" class="w-10 h-10 object-cover rounded bg-neutral-950 border border-metalBorder mx-auto" onerror="this.style.display='none'">` : '<div class="w-10 h-10 rounded bg-neutral-900 border border-metalBorder flex items-center justify-center text-xs mx-auto">💿</div>'}
+              <img src="${coverUrl}" alt="Cover" class="w-14 h-14 object-cover rounded-lg border border-metalBorder shadow-md mx-auto group-hover:border-metalRed transition-colors" onerror="this.src='https://placehold.co/150x150/141418/dc2626?text=Upcoming'">
             </td>
-            <td class="p-4 font-bold text-neutral-100">${item.artist || '-'}</td>
-            <td class="p-4 text-neutral-300">${item.title || '-'}</td>
-            <td class="p-4 text-neutral-400">${formattedDate}</td>
-            <td class="p-4 text-neutral-400">${item.genre || '-'}</td>
-            <td class="p-4">
-              <span class="text-xs font-bold px-2.5 py-1 rounded-md border ${badgeClass} inline-block">${badgeText}</span>
-            </td>
-            <td class="p-4">
-              ${item.spotify ? `<a href="${item.spotify}" target="_blank" onclick="event.stopPropagation()" class="text-emerald-400 hover:text-emerald-300 font-semibold text-sm flex items-center gap-1.5">🎧 Lyt</a>` : '-'}
+            <td class="p-4 font-semibold text-white">${item.artist || '<span class="text-amber-400 text-xs font-bold">⚠️ Mangler band</span>'}</td>
+            <td class="p-4 text-neutral-200">${item.title || '<span class="text-amber-400 text-xs font-bold">⚠️ Mangler titel</span>'}</td>
+            <td class="p-4 text-neutral-300 font-semibold text-xs">${formattedDate}</td>
+            <td class="p-4">${genreDisplay}</td>
+            <td class="p-4 text-right" onclick="event.stopPropagation()">
+              <div class="flex items-center justify-end gap-2">
+                ${item.spotify ? `<a href="${item.spotify}" target="_blank" class="bg-neutral-900 hover:bg-[#1DB954] hover:text-black text-neutral-400 border border-metalBorder p-2 rounded-lg transition-all" title="Åbn i Spotify">🎧</a>` : ''}
+                <button onclick="openEditModal('${safeArtist}', '${safeTitle}')" class="bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-metalBorder px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">🔍 Info</button>
+              </div>
             </td>
           </tr>
         `;
       });
 
-      html += `</tbody></table></div>`;
-      container.innerHTML = html;
+      desktopHtml += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = mobileHtml + desktopHtml;
     }
 
     function renderNewsView(container) {
       let filteredNews = newsList;
       if (activeSource !== 'all') {
-        filteredNews = newsList.filter(n => n.source === activeSource);
+        filteredNews = newsList.filter(article => article.source === activeSource);
       }
 
       if (filteredNews.length === 0) {
         container.innerHTML = `
-          <div class="bg-metalCard border border-metalBorder rounded-xl text-center py-16">
-            <div class="w-10 h-10 border-4 border-metalBorder border-t-metalRed rounded-full animate-spin mx-auto mb-4"></div>
-            <p class="text-neutral-400 text-lg">Henter nyheder fra RSS-feeds...</p>
+          <div class="bg-metalCard border border-metalBorder rounded-xl p-12 text-center">
+            <div class="text-4xl mb-3">📰</div>
+            <h3 class="font-cinzel text-lg font-bold text-white mb-1">Ingen nyheder fundet</h3>
+            <p class="text-neutral-400 text-sm">Prøv at opdatere feedet eller vælg en anden kilde.</p>
           </div>
         `;
         return;
       }
 
       let html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`;
-      filteredNews.forEach(item => {
-        const sourceObj = SOURCES.find(s => s.name === item.source);
-        const badgeClass = sourceObj ? sourceObj.badgeColor : 'bg-red-950 text-red-400 border-red-900';
-        
-        let formattedDate = '';
-        try {
-          const d = new Date(item.pubDate);
-          if (!isNaN(d)) {
-            formattedDate = d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' });
-          } else {
-            formattedDate = item.pubDate;
-          }
-        } catch(e) {
-          formattedDate = item.pubDate;
-        }
+
+      filteredNews.forEach(article => {
+        const sourceObj = SOURCES.find(s => s.name === article.source);
+        const badgeClass = sourceObj ? sourceObj.badgeColor : 'bg-neutral-800 text-neutral-300 border-neutral-700';
+        const pubDateStr = new Date(article.pubDate).toLocaleDateString('da-DK', { month: 'short', day: 'numeric', year: 'numeric' });
 
         html += `
-          <article class="bg-metalCard border border-metalBorder rounded-xl overflow-hidden flex flex-col card-hover">
-            <div class="h-48 overflow-hidden bg-neutral-950 relative border-b border-metalBorder">
-              <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" onerror="this.src='https://placehold.co/600x400/141418/dc2626?text=Metal+News'">
-              <div class="absolute top-3 left-3">
-                <span class="text-xs font-bold px-2.5 py-1 rounded-md border ${badgeClass} uppercase tracking-wider backdrop-blur-md bg-opacity-90">
-                  ${item.source}
-                </span>
+          <div class="bg-metalCard border border-metalBorder rounded-xl overflow-hidden card-hover flex flex-col justify-between">
+            <div>
+              <div class="h-48 overflow-hidden bg-black relative">
+                <img src="${article.image}" alt="${article.title}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x400/141418/dc2626?text=Metal+Vault'">
+                <div class="absolute top-3 left-3">
+                  <span class="text-[11px] font-bold px-2.5 py-1 rounded-md border ${badgeClass} shadow-md">${article.source}</span>
+                </div>
+              </div>
+              <div class="p-5">
+                <p class="text-xs text-neutral-400 mb-2">📅 ${pubDateStr}</p>
+                <h3 class="font-cinzel text-base font-bold text-white leading-snug mb-3 hover:text-metalRed transition-colors">
+                  <a href="${article.link}" target="_blank" rel="noopener noreferrer">${article.title}</a>
+                </h3>
+                <p class="text-xs text-neutral-300 line-clamp-3 leading-relaxed">${article.snippet}</p>
               </div>
             </div>
-            
-            <div class="p-5 flex flex-col flex-1">
-              <div class="text-xs text-neutral-400 mb-2 flex items-center gap-1.5 font-medium">
-                <svg class="w-3.5 h-3.5 text-metalRed" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                <span>${formattedDate}</span>
-              </div>
-
-              <h2 class="font-cinzel text-lg font-bold text-neutral-100 mb-3 line-clamp-2 hover:text-metalRed transition-colors">
-                <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
-              </h2>
-
-              <p class="text-sm text-neutral-400 mb-6 line-clamp-3 flex-1">
-                ${item.snippet}
-              </p>
-
-              <div class="pt-4 border-t border-metalBorder mt-auto">
-                <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-sm font-semibold text-metalRed hover:text-red-400 transition-colors">
-                  <span>Læs mere på kilden</span>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                </a>
-              </div>
+            <div class="p-5 pt-0">
+              <a href="${article.link}" target="_blank" rel="noopener noreferrer" class="block w-full bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-metalBorder py-2.5 rounded-lg text-xs font-semibold text-center transition-all">Læs hele artiklen ➔</a>
             </div>
-          </article>
+          </div>
         `;
       });
+
       html += `</div>`;
       container.innerHTML = html;
-    }
-
-    function openEditModalFromRow(encodedKey) {
-      if (!isAdmin) return;
-      const uniqueKey = decodeURIComponent(encodedKey);
-      const parts = uniqueKey.split('___');
-      const item = library.find(i => (i.artist || '') === parts[0] && (i.title || '') === parts[1]);
-      if (!item) return;
-
-      document.getElementById('album-modal').classList.remove('hidden');
-      document.getElementById('album-modal-title').innerText = 'Rediger Album';
-      document.getElementById('album-artist').value = item.artist || '';
-      document.getElementById('album-title').value = item.title || '';
-      document.getElementById('album-date').value = item.date ? String(item.date).split('T')[0] : '';
-      document.getElementById('album-genre').value = item.genre || '';
-      document.getElementById('album-rating').value = item.rating || 0;
-      document.getElementById('album-cover').value = item.cover || '';
-      document.getElementById('album-spotify').value = item.spotify || '';
-      document.getElementById('album-review').value = item.review || '';
-      updateCoverPreview(item.cover || '');
     }
   </script>
 </body>
